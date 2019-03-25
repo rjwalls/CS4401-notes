@@ -5,7 +5,7 @@ categories: lecture
 layout: post
 ---
 
-So far we've talked (alot) about one specific bug related to memory management:
+So far we've talked (a lot) about one specific bug related to memory management:
 buffer overflows. Today we are going to talk more about memory management in C
 and how memory mis-management can lead to many different types of errors. 
 
