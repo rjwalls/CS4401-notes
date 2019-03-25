@@ -106,7 +106,7 @@ we get the result
 which is interesting does not tell us if our input is on the stack. We probably
 need to print out more of the stack. So we run the following
 
-`./format1 "`python -c "print  'AAAA' + 'BBBB' +'%x ' * 200"`" | grep 41`
+```./format1 "`python -c "print  'AAAA' + 'BBBB' +'%x ' * 200"`" | grep 41```
 
 and we see that the output includes
 
