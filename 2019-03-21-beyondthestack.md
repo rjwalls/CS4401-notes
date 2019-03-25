@@ -16,7 +16,7 @@ Memory is allocated in multiple ways in C-based languages:
 
 The programmer is responsible for using allocated memory appropriately,
 including checking the bounds of memory accesses and types. The programmer is
-also reposible for the correct allocation and deallocation of dynamic memory.
+also responsible for the correct allocation and deallocation of dynamic memory.
 In contrast, the compiler handles the allocation and deallocation of local
 variables via instructions in the prologue and epilogue.
 
@@ -42,16 +42,16 @@ abusing CTORS and DTORS](https://www.exploit-db.com/papers/13234/).
 So far our attacks have primarily focused on overwriting the saved return
 address on the stack to hi-jack control flow. This saved return address is an
 example of a **code pointer**. We can broadly define a code pointer as a
-program variable that stores a code address and that address is intented to be
+program variable that stores a code address and that address is intended to be
 loaded into the instruction pointer.  
 
 Some examples of code pointers. 
- - Return addresses: the saved adddress of where execution must resume when a
+ - Return addresses: the saved address of where execution must resume when a
    function ends.
  - Function pointers: the C variable used to dynamically specify which function
    to execute.
  - Global offset table: addresses here are used to execute dynamically loaded
-   functions (lazy loading: contains stub code that will loaad the function
+   functions (lazy loading: contains stub code that will load the function
 into memory on the first call).
  - Virtual function table: addresses here are used to know which method to
    execute, e.g., dynamic binding in C++.
