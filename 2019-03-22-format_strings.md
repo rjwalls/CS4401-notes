@@ -127,7 +127,7 @@ We can see a bunch of addresses and in the middle we get
 
 `41414141 41414141 804a02c 25207825 78252078`
 
-Now I will leave up to you find the write padding needed so when you add `%n`
+Now I will leave up to you find the right padding needed so when you add `%n`
 to the end of you input string the address in question is `0x0804a02c`. This
 will change the value of the `target` and thus execute code previously not
 accesible to us.
@@ -148,7 +148,7 @@ we should do
 printf("%s", user_input)
 ```
 
-If the user passed format characters as its input it will simply interpret read
+If the user passed format characters as their input it will simply interpret read
 it as a string (due to `%s` being used). No sensitive information is leaked and no
 values on the stack are overwritten. As well, more modern compilers check for
 unsafe uses of format strings.
@@ -156,7 +156,7 @@ unsafe uses of format strings.
 There are existing defenses like stack canaries and ASLR to prevent a malicious user
 from exploiting your program. Stack canaries could prevent somebody from using
 `%n` to overwrite data on the stack. However, if you don't sanitize your user
-input it could leak information about key objects in memories and thus helping
+input it could leak information about key objects in memories and thus help
 an attacker overcome ASLR.
 
 ### Sources
