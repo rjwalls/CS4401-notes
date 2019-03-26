@@ -103,7 +103,7 @@ we get the result
 
 `1 c2 f7ea48fb ffffd5ee`
 
-which is interesting does not tell us if our input is on the stack. We probably
+which is interesting, but does not tell us if our input is on the stack. We probably
 need to print out more of the stack. So we run the following
 
 `./format1 "`python -c "print  'AAAA' + 'BBBB' +'%x ' * 200"`" | grep 41`
