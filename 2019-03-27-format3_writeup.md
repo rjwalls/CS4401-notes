@@ -87,7 +87,7 @@ Starting program: /home/vagrant/challenges/format3r/format3
 Breakpoint 1, main (argc=0x1, argv=0xffffd5e4) at format3.c:35
 35        vuln();
 (gdb) info address target
-Symbol "target" is static storage at address 0x804a048.
+Symbol "target" is static storage at address 0x804????.
 ```
 
 **Instructor's Note: I've redacted the address partially (via the "????" string) so that the reader can't just copy the solution string at the bottom.**
