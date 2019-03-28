@@ -159,6 +159,12 @@ from exploiting your program. Stack canaries could prevent somebody from using
 input it could leak information about key objects in memories and thus help
 an attacker overcome ASLR.
 
+### Extra Examples
+
+To see a more in depth walkthrough of the ideas from this article try following along with these writeups:
+
+1. [format3](/writeup/format3_writeup.html)
+
 ### Sources
 
 1. https://www.cs.virginia.edu/~ww6r/CS4630/lectures/Format\_String\_Attack.pdf
