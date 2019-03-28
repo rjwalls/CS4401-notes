@@ -163,7 +163,7 @@ an attacker overcome ASLR.
 
 To see a more in depth walkthrough of the ideas from this article try following along with these writeups:
 
-1. [format3](http://cs4401.walls.ninja/information/format3_writeup.html)
+1. [format3](/writeups/format3_writeup.html)
 
 ### Sources
 
