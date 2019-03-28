@@ -3,6 +3,7 @@ title: "Format Strings"
 date: 2019-03-22 09:00:00
 categories: information 
 layout: post
+author: Juan Luis Herrero Estrada
 ---
 
 One of the most common functions used in c is `printf`. In introductory Systems
