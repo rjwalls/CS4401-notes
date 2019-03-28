@@ -3,6 +3,7 @@ title: "Format Strings"
 date: 2019-03-22 09:00:00
 categories: information 
 layout: post
+author: Juan Luis Herrero Estrada
 ---
 
 One of the most common functions used in c is `printf`. In introductory Systems
@@ -158,6 +159,12 @@ from exploiting your program. Stack canaries could prevent somebody from using
 `%n` to overwrite data on the stack. However, if you don't sanitize your user
 input it could leak information about key objects in memories and thus help
 an attacker overcome ASLR.
+
+### Extra Examples
+
+To see a more in depth walkthrough of the ideas from this article try following along with these writeups:
+
+1. [format3](/writeup/format3_writeup.html)
 
 ### Sources
 
