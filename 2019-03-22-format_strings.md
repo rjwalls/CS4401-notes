@@ -52,7 +52,7 @@ value = 21
 ```
 
 In the previous example we provided the address of the value variable but what
-if non is given explicitly? Well, `printf` will try to use the next address on
+if none is given explicitly? Well, `printf` will try to use the next address on
 the stack and write to it most likely ending in a segmentation fault. This
 leads to 2 questions: where is user input placed in memory? and can we point
 where `%n` writes to? The answer of the first question is it depends. The

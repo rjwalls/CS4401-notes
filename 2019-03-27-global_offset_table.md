@@ -24,10 +24,10 @@ int main(int argc, char **argv){
 ```
 
 After compiling and executing our binary we get a string displayed on our
-screen. Nice and easy. However, this dinamically-linked binary calls the
-`printf` function from the standard C library. We can check this out by running
-`ldd sample` where `sample` is the binary compiled with the C code shown above.
-We get the result
+screen. Nice and easy. However, this dynamically-linked binary calls the
+`printf` function from the standard C library. We can get the list of
+dynamically linked binaries used by our program by running `ldd sample`---where
+`sample` is the binary compiled with the C code shown above.  We get the result
 
 ```
 linux-vdso.so.1 =>  (0x00007ffff7ffa000)
@@ -65,15 +65,20 @@ interested in is this line
 ```
 
 Here is where our external function gets called and how we're able to obtain
-its address to call it. One minor note, it does say `puts@plt` instead of
-`printf@plt` because of a compiler/linker optimization. It does not affect the
-execution of our binary nor the point we're making in this post. Thus we call
-`puts` in the procedure linkage table (plt or PLT) at address `0x400400`. When
-you compile your binary there are sections called relocations which are left
-for the linker to fill in at runtime [5]. The linker determines some value,
-maybe an address, and places that value inside the binary at some offset [5]. You
-could look at the relocations the compiler leaves behind by running `gcc -c
-sample.c` to compile and `readelf --relocs ./sample.o` which gives us
+its address to call it. One minor note, the binary uses `puts@plt` instead of
+`printf@plt` because of a compiler/linker optimization. Namely, the compiler
+sees that we are using a static string without a format specifier and decides
+that `printf` is not needed. However, the compiler's decision does not change
+the intended functionality of our binary nor the point we're making in this
+post. 
+
+Interpreting this line,  the program will call `puts` in the procedure linkage
+table (plt or PLT) at address `0x400400`.  When you compile your binary there
+are sections called relocations which are left for the linker to fill in at
+runtime [5]. The linker determines some value, maybe an address, and places
+that value inside the binary at some offset [5]. You could look at the
+relocations the compiler leaves behind by running `gcc -c sample.c` to compile
+and `readelf --relocs ./sample.o` which gives us
 
 ```
 Relocation section '.rela.text' at offset 0x208 contains 2 entries:
@@ -106,9 +111,16 @@ Dump of assembler code for function puts@plt:
 End of assembler dump.
 ```
 
-Interesting, so we jumped to the PLT but now from there we are jumping somwhere
-else. Specifically to this address `0x601018`. We can see what's there. We run
-`disas 0x601018` and we get
+Interesting, so we jumped to the PLT but we then immediately jump somewhere
+else, specifically to an address stored in the global offset table, more
+specifically to the stored address at `0x601018` in the GOT. This technique of
+jumping to a location and then immediately jumping somewhere else based on a
+stored value is often called **function trampolining**.
+
+**RJW: Note, this next bit of text doesn't make much sense as we are telling
+gdb to interpret the GOT as if it is code when instead it is just a table of
+addresses. That's why the instructions look all weird.**.  We can see what's at the GOT by 
+running `disas 0x601018` and we get
 
 ```assembly
 Dump of assembler code for function _GLOBAL_OFFSET_TABLE_:
@@ -136,17 +148,29 @@ Dump of assembler code for function _GLOBAL_OFFSET_TABLE_:
 End of assembler dump.
 ```
 
-We have trampolined to the global offset table (got or GOT). But what is
-exactly happening here? It is called lazy binding. The dynamic linker loads
-a library and places an identifier in the GOT. When the function gets called we
-jump to a default stub from the PLT into the GOT (`0x0000000000400400 <+0>:	jmpq   *0x200c12(%rip)        # 0x601018`)
-then the identifier is loaded (`0x0000000000400406 <+6>:	pushq  $0x0`) and the
-dynamic linker is called. Now there is enough information for the linker to
-patch the address in the GOT of the library function we wanted to call in our
-binary. We will then jump to this address from the PLT (`0x000000000040040b <+11>:	jmpq   0x4003f0`)
-rather than our default stub. As an illustration we set a breakpoint right after the
-call to `puts` has been done and run the binary with gdb. We look again in the
-global offset table by doing `disas 0x601018` and we see this
+We have trampolined to an address stored in the **global offset table** (got or
+GOT). Ideally, that stored address points to where `puts` has been loaded into
+memory. But it turns out that things are more complicated, namely, the address
+in the GOT is not updated until the program tries to call `puts` the first
+time. This process is called **lazy binding**. 
+
+The first time the program calls `puts`, the address in the GOT entry for puts
+actually points to a special bit of code that results in the dynamic linker
+loading the library and updating the GOT with the correct addresses. In future
+calls to `puts`, the `jmp` in the PLT will directly go to `puts` (since the GOT
+entry has been updated) rather than jumping to the linker code. 
+
+More concretely, the first time the program calls `puts` the "special bit" of
+code that's executed actually starts with the two instructions other
+instructions we saw in the PLT:  (`0x0000000000400406 <+6>:	pushq  $0x0`) tells
+the linker that function `0`, i.e., `puts`, was called and the next instruction
+jumps to the code to start the linking process (`0x000000000040040b <+11>:
+jmpq   0x4003f0`).
+
+As an illustration, if we set a breakpoint right after the first call
+to `puts`,  we see that the default values in the GOT have been replaced with
+the proper addresses---because the linker has updated the
+GOT to hold the correct address for `puts`.
 
 ```assembly
 Dump of assembler code for function _GLOBAL_OFFSET_TABLE_:
@@ -170,18 +194,19 @@ Dump of assembler code for function _GLOBAL_OFFSET_TABLE_:
 End of assembler dump.
 ```
 
-It has been changed just like we expected to happen. 
 
 ### TL;DR
 
-1. Compiler leaves spaces called relocations for linker to fill them in with
-   addresses of functions from shared libraries.
-2. Libraries change locations in memory due to ASLR.
-3. We call library function from our C code. We reach the PLT and from the PLT
-   we reach a stub entry of the global offset table and push an identifier.
-4. This signals linker to place address of library function in GOT. We jump
-   again from PLT to GOT and get the address of the library function.
-5. Success, we can call the function.
+1. The program doesn't know at compile-time where dynamically linked libraries
+   will be placed in memory, so it doesn't know exactly where functions like
+`puts` will be placed.
+2. As a result, the program will instead calls a stub function for `puts` at a
+   location is  does know, i.e., in the procedure linkage table. 
+3. The stub function (`puts@plt`) will get the runtime address of the real
+   `puts` from the global offset table (a data structure updated by the linker
+at runtime).
+4. When we call a first call the library function from our C code, the linker
+   will update the GOT to use the correct address of the library function.
 
 ### Example
 
