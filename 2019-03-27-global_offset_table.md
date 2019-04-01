@@ -105,51 +105,59 @@ calling `puts`. We run `disas 0x400400` and we get
 
 ```assembly
 Dump of assembler code for function puts@plt:
-   0x0000000000400400 <+0>:	jmpq   *0x200c12(%rip)        # 0x601018
-   0x0000000000400406 <+6>:	pushq  $0x0
-   0x000000000040040b <+11>:	jmpq   0x4003f0
+   0x0000000000400400 <+0>:	jmp    QWORD PTR [rip+0x200c12]        # 0x601018
+   0x0000000000400406 <+6>:	push   0x0
+   0x000000000040040b <+11>:	jmp    0x4003f0
 End of assembler dump.
 ```
 
 Interesting, so we jumped to the PLT but we then immediately jump somewhere
-else, specifically to an address stored in the global offset table, more
-specifically to the stored address at `0x601018` in the GOT. This technique of
+else, specifically to `0x601018`. This technique of
 jumping to a location and then immediately jumping somewhere else based on a
 stored value is often called **function trampolining**.
 
-**RJW: Note, this next bit of text doesn't make much sense as we are telling
-gdb to interpret the GOT as if it is code when instead it is just a table of
-addresses. That's why the instructions look all weird.**.  We can see what's at the GOT by 
-running `disas 0x601018` and we get
+Actually, we have trampolined to an address stored in the **global offset table** (got or
+GOT). We can see where the global offset table begins and what's stored at that address
+by running `x _GLOBAL_OFFSET_TABLE_` which gives us `0x600e28:	0x00000001`. We
+can see more of the GOT, including address `0x601018` by running `x/128wx _GLOBAL_OFFSET_TABLE_`
+and we get
 
-```assembly
-Dump of assembler code for function _GLOBAL_OFFSET_TABLE_:
-   0x0000000000601000:	sub    %cl,(%rsi)
-   0x0000000000601002:	(bad)
-   0x0000000000601003:	add    %al,(%rax)
-   0x0000000000601005:	add    %al,(%rax)
-   0x0000000000601007:	add    %al,(%rax)
-   0x0000000000601009:	add    %al,(%rax)
-   0x000000000060100b:	add    %al,(%rax)
-   0x000000000060100d:	add    %al,(%rax)
-   0x000000000060100f:	add    %al,(%rax)
-   0x0000000000601011:	add    %al,(%rax)
-   0x0000000000601013:	add    %al,(%rax)
-   0x0000000000601015:	add    %al,(%rax)
-   0x0000000000601017:	add    %al,(%rsi)
-   0x0000000000601019:	add    $0x40,%al
-   0x000000000060101b:	add    %al,(%rax)
-   0x000000000060101d:	add    %al,(%rax)
-   0x000000000060101f:	add    %dl,(%rsi)
-   0x0000000000601021:	add    $0x40,%al
-   0x0000000000601023:	add    %al,(%rax)
-   0x0000000000601025:	add    %al,(%rax)
-   0x0000000000601027:	add    %al,(%rax)
-End of assembler dump.
+```
+0x600e28:	0x00000001	0x00000000	0x00000001	0x00000000
+0x600e38:	0x0000000c	0x00000000	0x004003c8	0x00000000
+0x600e48:	0x0000000d	0x00000000	0x004005c4	0x00000000
+0x600e58:	0x00000019	0x00000000	0x00600e10	0x00000000
+0x600e68:	0x0000001b	0x00000000	0x00000008	0x00000000
+0x600e78:	0x0000001a	0x00000000	0x00600e18	0x00000000
+0x600e88:	0x0000001c	0x00000000	0x00000008	0x00000000
+0x600e98:	0x6ffffef5	0x00000000	0x00400298	0x00000000
+0x600ea8:	0x00000005	0x00000000	0x00400318	0x00000000
+0x600eb8:	0x00000006	0x00000000	0x004002b8	0x00000000
+0x600ec8:	0x0000000a	0x00000000	0x0000003d	0x00000000
+0x600ed8:	0x0000000b	0x00000000	0x00000018	0x00000000
+0x600ee8:	0x00000015	0x00000000	0x00000000	0x00000000
+0x600ef8:	0x00000003	0x00000000	0x00601000	0x00000000
+0x600f08:	0x00000002	0x00000000	0x00000030	0x00000000
+0x600f18:	0x00000014	0x00000000	0x00000007	0x00000000
+0x600f28:	0x00000017	0x00000000	0x00400398	0x00000000
+0x600f38:	0x00000007	0x00000000	0x00400380	0x00000000
+0x600f48:	0x00000008	0x00000000	0x00000018	0x00000000
+0x600f58:	0x00000009	0x00000000	0x00000018	0x00000000
+0x600f68:	0x6ffffffe	0x00000000	0x00400360	0x00000000
+0x600f78:	0x6fffffff	0x00000000	0x00000001	0x00000000
+0x600f88:	0x6ffffff0	0x00000000	0x00400356	0x00000000
+0x600f98:	0x00000000	0x00000000	0x00000000	0x00000000
+0x600fa8:	0x00000000	0x00000000	0x00000000	0x00000000
+0x600fb8:	0x00000000	0x00000000	0x00000000	0x00000000
+0x600fc8:	0x00000000	0x00000000	0x00000000	0x00000000
+0x600fd8:	0x00000000	0x00000000	0x00000000	0x00000000
+0x600fe8:	0x00000000	0x00000000	0x00000000	0x00000000
+0x600ff8:	0x00000000	0x00000000	0x00600e28	0x00000000
+0x601008:	0x00000000	0x00000000	0x00000000	0x00000000
+0x601018:	0x00400406	0x00000000	0x00400416	0x00000000
 ```
 
-We have trampolined to an address stored in the **global offset table** (got or
-GOT). Ideally, that stored address points to where `puts` has been loaded into
+Ideally, that stored address points to where `puts` has been loaded into
 memory. But it turns out that things are more complicated, namely, the address
 in the GOT is not updated until the program tries to call `puts` the first
 time. This process is called **lazy binding**. 
@@ -162,38 +170,27 @@ entry has been updated) rather than jumping to the linker code.
 
 More concretely, the first time the program calls `puts` the "special bit" of
 code that's executed actually starts with the two instructions other
-instructions we saw in the PLT:  (`0x0000000000400406 <+6>:	pushq  $0x0`) tells
+instructions we saw in the PLT:  (`0x0000000000400406 <+6>:	push   0x0
+`) tells
 the linker that function `0`, i.e., `puts`, was called and the next instruction
-jumps to the code to start the linking process (`0x000000000040040b <+11>:
-jmpq   0x4003f0`).
+jumps to the code to start the linking process (`0x000000000040040b <+11>:	jmp    0x4003f0`).
 
 As an illustration, if we set a breakpoint right after the first call
 to `puts`,  we see that the default values in the GOT have been replaced with
 the proper addresses---because the linker has updated the
-GOT to hold the correct address for `puts`.
+GOT to hold the correct address for `puts`. Next we check the where the GOT
+begins by running `x _GLOBAL_OFFSET_TABLE_` gives back `0x601000:	0x00600e28`.
+Interesting, the start of the GOT is now closer to address `0x601018` where the
+address of `puts` is stored. If we run `x/8wx _GLOBAL_OFFSET_TABLE_` we get
+back 
 
-```assembly
-Dump of assembler code for function _GLOBAL_OFFSET_TABLE_:
-   0x0000000000601000:	sub    %cl,(%rsi)
-   0x0000000000601002:	(bad)
-   0x0000000000601003:	add    %al,(%rax)
-   0x0000000000601005:	add    %al,(%rax)
-   0x0000000000601007:	add    %ch,-0x1f(%rax)
-   0x000000000060100a:	push   %rdi
-   0x000000000060100c:	(bad)
-   0x000000000060100d:	jg     0x60100f
-   0x000000000060100f:	add    %dl,(%rax)
-   0x0000000000601011:	out    %al,(%dx)
-   0x0000000000601012:	fdivp  %st,%st(7)
-   0x0000000000601014:	(bad)
-   0x0000000000601015:	jg     0x601017
-   0x0000000000601017:	add    %dl,-0x8583a(%rax)
-   0x000000000060101d:	jg     0x60101f
-   0x000000000060101f:	add    %al,-0x29(%rax)
-   0x0000000000601022:	movabs %al,0x7ffff7
-End of assembler dump.
+```
+0x601000:	0x00600e28	0x00000000	0xf7ffe168	0x00007fff
+0x601010:	0xf7deee10	0x00007fff	0xf7a7c690	0x00007fff
 ```
 
+This means that the address for `puts` must be `0xf7a7c690`. We can confirm
+this by runnning `x 0x601018` which should give us the same result.
 
 ### TL;DR
 
