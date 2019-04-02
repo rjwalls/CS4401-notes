@@ -1,7 +1,7 @@
 ---
 title: "Format Strings"
 date: 2019-03-22 09:00:00
-categories: information 
+categories: notes
 layout: post
 author: Juan Luis Herrero Estrada
 ---

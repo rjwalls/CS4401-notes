@@ -1,7 +1,7 @@
 ---
 title:  "Lecture Notes: Shellcoding"
 date:   2019-03-18 09:00:00
-categories: lecture 
+categories: notes lecture
 layout: post
 ---
 

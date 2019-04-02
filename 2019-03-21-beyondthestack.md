@@ -1,7 +1,7 @@
 ---
 title:  "Lecture Notes: Moving Beyond the Stack"
 date:   2019-03-21 09:00:00
-categories: lecture 
+categories: notes lecture
 layout: post
 ---
 

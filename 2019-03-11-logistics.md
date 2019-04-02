@@ -1,7 +1,7 @@
 ---
 title:  "Course Logistics"
 date:   2019-03-11 08:00:00
-categories: information 
+categories: logistics
 layout: post
 ---
 

@@ -1,7 +1,7 @@
 ---
 title:  "format3 Writeup"
 date:   2019-03-27 11:08:00
-categories: writeup 
+categories: writeup
 layout: post
 author: Thomas White
 ---
