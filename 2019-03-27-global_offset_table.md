@@ -44,16 +44,16 @@ running `set disassembly-flavor intel`. Run `disas main` and we get
 
 ```assembly
 Dump of assembler code for function main:
-   0x0000000000400526 <+0>:	push   rbp
-   0x0000000000400527 <+1>:	mov    rbp,rsp
-   0x000000000040052a <+4>:	sub    rsp,0x10
-   0x000000000040052e <+8>:	mov    DWORD PTR [rbp-0x4],edi
-   0x0000000000400531 <+11>:	mov    QWORD PTR [rbp-0x10],rsi
-   0x0000000000400535 <+15>:	mov    edi,0x4005d4
-   0x000000000040053a <+20>:	call   0x400400 <puts@plt>
-   0x000000000040053f <+25>:	mov    eax,0x0
-   0x0000000000400544 <+30>:	leave
-   0x0000000000400545 <+31>:	ret
+   0x0000000000400526 <+0>:  push  rbp
+   0x0000000000400527 <+1>:  mov   rbp,rsp
+   0x000000000040052a <+4>:  sub   rsp,0x10
+   0x000000000040052e <+8>:  mov   DWORD PTR [rbp-0x4],edi
+   0x0000000000400531 <+11>: mov   QWORD PTR [rbp-0x10],rsi
+   0x0000000000400535 <+15>: mov   edi,0x4005d4
+   0x000000000040053a <+20>: call  0x400400 <puts@plt>
+   0x000000000040053f <+25>: mov   eax,0x0
+   0x0000000000400544 <+30>: leave
+   0x0000000000400545 <+31>: ret
 End of assembler dump.
 ```
 
@@ -74,7 +74,7 @@ post.
 
 Interpreting this line,  the program will call `puts` in the procedure linkage
 table (plt or PLT) at address `0x400400`.  When you compile your binary there
-are sections called relocations which are left for the linker to fill in at
+are sections called **relocations** which are left for the linker to fill in at
 runtime [5]. The linker determines some value, maybe an address, and places
 that value inside the binary at some offset [5]. You could look at the
 relocations the compiler leaves behind by running `gcc -c sample.c` to compile
@@ -105,9 +105,9 @@ calling `puts`. We run `disas 0x400400` and we get
 
 ```assembly
 Dump of assembler code for function puts@plt:
-   0x0000000000400400 <+0>:	jmp    QWORD PTR [rip+0x200c12]        # 0x601018
-   0x0000000000400406 <+6>:	push   0x0
-   0x000000000040040b <+11>:	jmp    0x4003f0
+   0x0000000000400400 <+0>:  jmp    QWORD PTR [rip+0x200c12]        # 0x601018
+   0x0000000000400406 <+6>:  push   0x0
+   0x000000000040040b <+11>: jmp    0x4003f0
 End of assembler dump.
 ```
 
@@ -162,14 +162,14 @@ memory. But it turns out that things are more complicated, namely, the address
 in the GOT is not updated until the program tries to call `puts` the first
 time. This process is called **lazy binding**. 
 
-The first time the program calls `puts`, the address in the GOT entry for puts
-actually points to a special bit of code that results in the dynamic linker
+The first time the program calls `puts`, the address in the GOT entry for
+`puts` actually points to a special bit of code that results in the dynamic linker
 loading the library and updating the GOT with the correct addresses. In future
 calls to `puts`, the `jmp` in the PLT will directly go to `puts` (since the GOT
 entry has been updated) rather than jumping to the linker code. 
 
 More concretely, the first time the program calls `puts` the "special bit" of
-code that's executed actually starts with the two instructions other
+code that's executed actually starts with the two instructions
 instructions we saw in the PLT:  (`0x0000000000400406 <+6>:	push   0x0
 `) tells
 the linker that function `0`, i.e., `puts`, was called and the next instruction
@@ -197,8 +197,8 @@ this by runnning `x 0x601018` which should give us the same result.
 1. The program doesn't know at compile-time where dynamically linked libraries
    will be placed in memory, so it doesn't know exactly where functions like
 `puts` will be placed.
-2. As a result, the program will instead call a stub function for `puts` at a
-   location is  does know, i.e., in the procedure linkage table. 
+2. As a result, the program will instead calls a stub function for `puts` at a
+   location it does know, i.e., in the procedure linkage table. 
 3. The stub function (`puts@plt`) will get the runtime address of the real
    `puts` from the global offset table (a data structure updated by the linker
 at runtime).
