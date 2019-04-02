@@ -202,7 +202,7 @@ this by runnning `x 0x601018` which should give us the same result.
 3. The stub function (`puts@plt`) will get the runtime address of the real
    `puts` from the global offset table (a data structure updated by the linker
 at runtime).
-4. When we call a first call the library function from our C code, the linker
+4. When we first call the library function from our C code, the linker
    will update the GOT to use the correct address of the library function.
 
 ### Example
@@ -261,7 +261,7 @@ End of assembler dump.
 ```
 
 We now know the address in the GOT where the address for the `exit` C function
-is located at. Lets overwrite that using gdb. So we do `set
+is located. Lets overwrite that using gdb. So we do `set
 {int}0x804a01c=0x804853b` and we do `c` for continue. Surprise surpise, the
 program outputs
 
