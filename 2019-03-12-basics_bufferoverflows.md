@@ -1,5 +1,5 @@
 ---
-title:  "Lecture Notes: Stack0 and Basic Buffer Overflows"
+title:  "Lecture Notes: Basics of Buffer Overflows"
 date:   2019-03-12 08:00:00
 categories: notes lecture
 layout: post
@@ -8,11 +8,19 @@ layout: post
 
 In this lecture, we are going to dive right into exploiting binaries. We will
 begin with simple stack-based buffer overflows and work our way to the
-venerable stack-smashing example. We try to answer important questions such as: What are `setuid` binaries?
-What is priviledge escalation. 
+venerable stack-smashing example. We try to answer important questions such as:
+What is arbitrary code execution? What are `setuid` binaries?  What is
+priviledge escalation? 
 
 
-### stack0 
+### Our First Challenge Binary
+
+This the source code for the `stack0` challenge binary. Your objective is to
+figure out how to exploit this binary. What do I mean by exploit? Well, loosely
+I mean that your job is to take control of how `stack0` executes to accomplish
+some nefarious goal. Here that goal is to read the contents of `flag.txt`;
+presumably because we don't have permission to read it directly. 
+
 
 
 ```c
@@ -39,20 +47,12 @@ int main(int argc, char **argv)
   }
 }
 ```
-
-I want everyone to take a look at this code. Try to understand what is
-happening and why I might be showing you this example. 
-
-This the source code for a challenge binary. Your objective is to figure out
-how to exploit that binary. What do I mean by exploit? Well, loosely I mean
-that your job is to take control of how that binary executes to accomplish some
-nefarious goal. Here that goal is to read the contents of `flag.txt`;
-presumably because we don't have permission to read it directly. 
+ 
 
 More generally, that goal involves gaining **arbitrary code execution** on the
-victim machine. This means I can execute whatever code I want. It should be
-straight-forward to see how arbitrary code execution can mean bad things for
-the owner of the machine. 
+target  machine. This means I (the attacker) can execute whatever code I want.
+It should be straight-forward to see how arbitrary code execution can mean bad
+things for the owner of the machine. 
 
 How we (the attacker) obtain arbitrary code execution is one of the primary
 subjects of this course; however, in this example the goal is actually much
