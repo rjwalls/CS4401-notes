@@ -8,7 +8,9 @@ layout: post
 
 In this lecture, we are going to dive right into exploiting binaries. We will
 begin with simple stack-based buffer overflows and work our way to the
-venerable stack-smashing example.
+venerable stack-smashing example. We try to answer important questions such as: What are `setuid` binaries?
+What is priviledge escalation. 
+
 
 ### stack0 
 
@@ -319,4 +321,36 @@ r < 65.txt
 x/68bx $esp+0x1c
 c
 ```
+
+### Setuid Binaries
+
+Why is it that we have don't have permission to read "flag.txt" but when
+exploit the binary when read "flag.txt"? In other words, why does a binary
+(that we can run) have different permissions than we do?
+
+First, let's take a look at the stack4 binary using the `file` utility: `file
+./stack4`. The output includes a curious bit of text calling stack4 a "setuid"
+ELF executable.  What does "setuid" mean here? To find out, we start the same
+way we always do on Linux: reading the MAN page. 
+
+The man page gives us more information (specifically, about the C library
+funciton, but they are related). We can see that setuid stands for set user
+identity. It allows a process to run as if it was started by a particular user
+and, consequently, run with that user's permissions.  Setuid binaries are
+useful for acheiving **priviledge escalation**. 
+
+If we run `id` we can see information about the current user, including their
+user id and group id. We can use `cat /etc/passwd` to see all of the users on
+the system. For example, we see that "root" has a userid of 0. 
+
+Fortunately, a malicious user cannot simply write a program and use setuid to
+make that program run as root. The OS has permissions in place to prevent that
+(as we can posit from looking at the errors section of the man page). So what
+is it good for? It is often used to allow an unpriviledged user to access
+hardware features or to temporarily give a user elevated priviledges, e.g.,
+`ping` and `sudo` are both setuid binaries.  For an attacker, though, if he can
+exploit a setuid binary that is running as root, then he effectively has root
+priviledges. 
+
+
 

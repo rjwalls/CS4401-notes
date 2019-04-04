@@ -1,12 +1,17 @@
 ---
-title:  "Lecture Notes: Moving Beyond the Stack"
+title:  "Lecture Notes: Basics of Control-flow Hijacking"
 date:   2019-03-21 09:00:00
 categories: notes lecture
 layout: post
 ---
 
-So far we've talked (a lot) about one specific bug related to memory management:
-buffer overflows. Today we are going to talk more about memory management in C
+So far we've talked (a lot) about one specific bug related to memory
+management: buffer overflows. We've discussed how a simple buffer overflow can
+be used by an attacker to take control of a program's execution. In other
+words, we introduced the most basic example of a **control-flow hijacking**
+attack.
+
+Today we are going to talk more about memory management in C
 and how memory mis-management can lead to many different types of errors. 
 
 Memory is allocated in multiple ways in C-based languages:
