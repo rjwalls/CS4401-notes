@@ -1,7 +1,7 @@
 ---
-title: "Global Offset Table"
+title: "Lecture Notes: Basics of the Global Offset Table"
 date: 2019-03-27 09:00:00
-categories: notes
+categories: notes lecture
 layout: post
 ---
 
