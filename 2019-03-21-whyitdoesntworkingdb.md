@@ -1,7 +1,7 @@
 ---
-title:  "Why Doesn't it work in GDB?"
+title:  "Quick Notes: Why Doesn't it work in GDB?"
 date:   2019-03-21 09:00:00
-categories: notes
+categories: notes quick
 layout: post
 ---
 

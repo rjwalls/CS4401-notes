@@ -1,7 +1,7 @@
 ---
-title:  "Core Dumps"
+title:  "Quick Notes: Core Dumps"
 date:   2019-03-13 08:00:00
-categories: notes
+categories: notes quick
 layout: post
 ---
 
