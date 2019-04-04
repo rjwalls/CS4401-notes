@@ -1,7 +1,7 @@
 ---
 title:  "Core Dumps"
 date:   2019-03-13 08:00:00
-categories: information 
+categories: notes
 layout: post
 ---
 

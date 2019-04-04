@@ -1,7 +1,7 @@
 ---
 title:  "Lecture Notes: Stack0 and Basic Buffer Overflows"
 date:   2019-03-12 08:00:00
-categories: lecture 
+categories: notes lecture
 layout: post
 ---
 
