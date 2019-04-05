@@ -6,6 +6,8 @@ layout: post
 author: Juan Luis Herrero Estrada
 ---
 
+Buffer overflows are not the only programming error that an attacker can leverage to exploit binaries. In these notes, we introduce the concept of **string format vulnerabilities** and describe how they can be used to both leak information from memory and modify *arbitrary* locations with *arbitrary* values. In short, string format vulnerabilities offer opportunities beyond what is possible for a simple buffer overflow. 
+
 One of the most common functions used in c is `printf`. In introductory Systems
 courses we learn how to read input from a file or stdin, perform some string
 manipulation, and display the result on the command line using `printf`. Most
@@ -167,6 +169,8 @@ To see a more in depth walkthrough of the ideas from this article try following 
 1. [format3](/writeup/format3_writeup.html)
 
 ### Sources
+
+For more information about format strings and associated attacks, consider taking a look at the following links.
 
 1. https://www.cs.virginia.edu/~ww6r/CS4630/lectures/Format\_String\_Attack.pdf
 2. https://stackoverflow.com/questions/18681078/in-which-memory-segment-command-line-arguments-get-stored
