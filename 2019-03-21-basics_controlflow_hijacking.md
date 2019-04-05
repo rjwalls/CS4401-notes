@@ -3,6 +3,7 @@ title:  "Lecture Notes: Basics of Control-flow Hijacking"
 date:   2019-03-21 09:00:00
 categories: notes lecture
 layout: post
+challenges: heap1r heap3r
 ---
 
 So far we've talked (a lot) about one specific bug related to memory
@@ -136,66 +137,78 @@ end of the main function, the stack should look like the following:
 
 
 
-### Heap-based buffer overflows
+### Indirect Pointer Overwriting on the Heap
 
 The previous example of indirect pointer overwriting probably felt a little
 contrived. However, that type of vulnerability shows up quite naturally when
-using the heap. To understand why, we need to understand how the heap works. 
-
-The heap contains dynamically allocated memory. This memory must be explicitly
-managed by the programmer, e.g., using calls to malloc() and free(). For
-example, the following code will allocate some memory on the heap and return a
-pointer to the calling function.
-
-```c
-int * array = malloc(10 * sizeof(int));
-```
-
-When the program no longer needs that allocated memory, it can be freed using:
-
-```c
-free(array);
-```
-
-Notice that free simply takes a pointer to the memory. How does free know how
-big the allocated memory chunk was?  Importantly, each chunk of allocated
-memory is associated with some metadata that describes information about that
-chunk, e.g., the size. Often that metadata is stored in a header that is
-adjacent to the chunk in memory. Given a pointer to allocated memory, `free()`
-just needs to look at a fixed offset from the pointer to access the metadata
-and get the size of the chunk. Further, if an attacker overflows a heap buffer,
-then they can overwrite that metadata. To better visualize how the heap works, 
-watch this [LiveOverflow video][liveoverflow-heap]. 
-
-[liveoverflow-heap]: https://youtu.be/HPDBOhiKaD8
+using the heap. 
 
 But wait...when we overflow on the stack, we directly manipulate the saved
 return address to hi-jack the control flow...but there are not any return
 values on the heap. So how can heap-based buffer overflows help us if there
-aren't any return values? We are going to construct a write-what-where
-vulnerability that takes advantage of this behavior.
+aren't any return values?  The answer here is that we need to construct a write-what-where
+vulnerability that will allow us to write whatever value we want to whatever
+location we want. This would allow us to target a return address[^1] on the stack
+and change the value to any address we choose.
 
-`malloc` is going to start its operation by grabbing a large, contiguous,
+[^1] Note, we don't have to target a return address on the stack. There are many other code pointer that might make better targets, e.g., an entry in the global offset table. We will talk about the global offset table in another lecture.
+
+For example, consider the `heap1r` challenge:
+
+```c
+struct internet {
+  int priority;
+  char *name;
+};
+
+void winner()
+{
+  ...
+}
+
+int main(int argc, char **argv)
+{
+  struct internet *i1, *i2, *i3;
+
+  i1 = malloc(sizeof(struct internet));
+  i1->priority = 1;
+  i1->name = malloc(8);
+
+  i2 = malloc(sizeof(struct internet));
+  i2->priority = 2;
+  i2->name = malloc(8);
+
+  strcpy(i1->name, argv[1]);
+  strcpy(i2->name, argv[2]);
+
+  printf("and that's a wrap folks!\n");
+}
+
+
+```
+
+The buffer overflow in this code leads to write-what-where style vulnerability that is very similar to what we saw in the previous example. In particular, we can manipulate both where the `name` field from struct `i2` points as well as the value that gets written to that location. To understand how this attack is possible, we need to first understand how the heap works. For that, I invite you to watch this [LiveOverflow video on the basics of malloc][liveoverflow-heap]. 
+
+[liveoverflow-heap]: https://youtu.be/HPDBOhiKaD8 
+
+
+
+### Exploiting Malloc Unlinking
+
+Another way to create a write-what-where vulnerability is to exploit the unlinking behavior of malloc's freelist.  
+The basic idea of the attack is as follows. We are going to manipuate the metadata of the free memory chunks stored in the freelist such that when malloc re-allocates a particular chunk (i.e., unlinking that chunk from the freelist) malloc will write an attacker-provided value to an attacker-provided location. We give the full details below.
+
+Recall that `malloc` is going to start its operation by grabbing a large, contiguous,
 region of memory of from the OS to form the heap. Whenever a function calls
 `malloc`, `malloc` is going to take a piece of that memory, called a **chunk**,
-and return a pointer to the calling function. You can visualize the memory like
-this:
+and return a pointer to the calling function. Also recall, that malloc write a header for each chunk so that it can keep track of important metadata.
 
-```
-+----------------------------------------------------------------------------+
-|XXXXX       XXXXXXXXXX     XXXXXXXXXXXXXXXXX        XXXXXXXXXXXX            |
-+----------------------------------------------------------------------------+
-         XX: Used Chunk
-
-```
-
-Notice that free and used chunks are interspersed throughout the heap. If we
-take a closer look at a single chunk (one that is in use) we can see what the
-header looks like.
+If we take a closer look at a single chunk (one that is in use) the
+header looks like the following:
 
 
 ```
-CHUNK 1: In use
+CHUNK FOO: In use
 
                pointer returned
                by malloc()
@@ -210,42 +223,54 @@ chunk          |
            v
            size of this
            chunk
+           
+Note: In some version of malloc, the lowest order bit is set to indicate if the previous chunk is in use.
 
 ```
 
-If we free chunk 1, the first part of the user data gets overwritten with a
-couple of pointers. These pointers are used to insert the chunk into
-doubly-linked list of free chunks, often called a **freelist**. `malloc` will
-use this list of free chunks to allocate memory when `malloc()` is called. 
 
+Whenever the program makes a request via `malloc()`, malloc is going to pick one of the free chunks and give it to the process. When the program `frees` memory, malloc adds it back to the list of free chunks.
+After the process has been executing for a while---and a number of chunks have been allocated and freed---the heap will start to look  something like this:
 
 ```
-CHUNK 1: After being freed
-
-              Prev chunk in freelist
-
-                 ^
-                 |
-                 |
-+----------------+----------------------------------------------------------+
-|sizp|size| FWD| BCK| Old user data...                                      |
-+----------+----------------------------------------------------------------+
-           |
-           |
-           v
-
-        Next chunk in freelist
++----------------------------------------------------------------------------+
+|XXXXX       XXXXXXXXXX     XXXXXXXXXXXXXXXXX        XXXXXXXXXXXX            |
++----------------------------------------------------------------------------+
+         XX: Used Chunk
 
 ```
 
-Note: the next chunk in the freelist is not necessarily adjacent in memory to
-the current chunk. When we unlink a chunk from the freelist, we have to update
+Notice that free and used chunks are interspersed throughout the heap, so malloc has to use some mechanism to keep track of where the free chunks are in memory. This mechanism is a doubly-linked list of free chunks called a **free-list**.
+
+Now imagine a scenario where the program has freed a particular chunk. Malloc will update the header of the now-freed chunk to add forward and backward pointers, inserting the chunk into the freelist. These new pointers actually overwrite the first 8 bytes of the user data that was stored in the chunk (before it was freed). 
+
+```
+CHUNK FOO: After being freed
+
+               Next chunk in freelist
+               ^
+size of prev.  |
+chunk          |
+    ^          |
+    |          |
+    +----+----++----------------------------------------------------------+
+    |    |    | FWD | BCK |   Old data                                    |
+    +----+-+--+-----------------------------------------------------------+
+                     |
+                     v
+                     Previous chunk in freelist
+
+```
+
+Keep in mind that free chunks are likely scattered throughout the heap, so the next chunk in the freelist (i.e., the chunk pointed to by`FWD`) is not necessarily adjacent in memory to `chunk foo`. 
+
+When we unlink a chunk from the freelist, we have to update
 the pointers to remove the unlinked chunk. The key point is that `malloc` uses
-the header information stored in the chunk to figure out what needs updating. 
+the `FWD` and `BCK` pointers stored in the chunk  to figure out what needs updating. 
 
-Imagine that chunk 0 and chunk 1 are adjacent in memory. Further, chunk 0 is in
-use while chunk 1 is free. An attacker can overflow a buffer in chunk 0 to
-overwrite the forward and backward freelist pointers in chunk 1. If the forward
+Imagine that chunk bar and chunk foo are adjacent in memory. Further, chunk bar is in
+use while chunk foo is free. An attacker can overflow a buffer in chunk bar to
+overwrite the forward and backward freelist pointers in chunk foo. If the forward
 pointer is changed to point to the target return address (on the stack) and the
 backward pointer is changed to point to the injected code (on the heap), the
 freelist unlinking process will overwrite the return address with the address
@@ -254,7 +279,7 @@ process (i.e., force malloc to reallocate that memory).
 
 
 ```
-CHUNK 0                              CHUNK 1
+CHUNK Foo                              CHUNK Bar
   in use                               in free list
      +----------------------------------------+
      |                                        |
@@ -271,3 +296,7 @@ CHUNK 0                              CHUNK 1
                                       +-------+
 ```
 
+
+**A major caveat:** Real malloc implementations are a lot more complicated than what we have presented here. The specific behavior we  want to exploit will depend on the implementation of malloc (and there are a lot of implementations). For example, this LiveOverflow video describes how [dlmalloc handles fastbins][fastbins]. 
+
+[fastbins]: https://youtu.be/gL45bjQvZSU
