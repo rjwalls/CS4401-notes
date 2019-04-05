@@ -5,6 +5,9 @@ categories: notes lecture
 layout: post
 ---
 
+So far, we've mostly targeted return addresses on the stack for our exploits with the occasional manipulation of a function pointer. However, there are many other locations we can target to hi-jack the program's control flow. In this set of notes, we describe the **Global Offset Table** a particularly useful structure that contains plenty of interesting code pointers for us to manipulate.
+
+
 There exists two types of binaries: statically-linked and dynamically-linked.
 The first kind is self-contained. Meaning it has all the functions and code
 needed to execute. These binaries do not use external libraries. On the other
@@ -273,6 +276,8 @@ we have successfully redirected code execution by overwriting the address on
 the global offset table.
 
 ### Sources
+
+Check out the following links for more information on how the global offset table works and how you might use it when exploiting binaries. 
 
 1. https://systemoverlord.com/2017/03/19/got-and-plt-for-pwning.html
 2. https://www.youtube.com/watch?v=kUk5pw4w0h4
