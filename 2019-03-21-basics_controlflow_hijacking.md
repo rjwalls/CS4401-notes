@@ -164,7 +164,10 @@ chunk, e.g., the size. Often that metadata is stored in a header that is
 adjacent to the chunk in memory. Given a pointer to allocated memory, `free()`
 just needs to look at a fixed offset from the pointer to access the metadata
 and get the size of the chunk. Further, if an attacker overflows a heap buffer,
-then they can overwrite that metadata. 
+then they can overwrite that metadata. To better visualize how the heap works, 
+watch this [LiveOverflow video][liveoverflow-heap]. 
+
+[liveoverflow-heap]: https://youtu.be/HPDBOhiKaD8
 
 But wait...when we overflow on the stack, we directly manipulate the saved
 return address to hi-jack the control flow...but there are not any return
