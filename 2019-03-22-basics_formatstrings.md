@@ -1,9 +1,12 @@
 ---
-title: "Format Strings"
+title: "Lecture Notes: Basics of Format String Vulnerabilities"
 date: 2019-03-22 09:00:00
-categories: information 
+categories: lecture notes
 layout: post
+author: Juan Luis Herrero Estrada
 ---
+
+Buffer overflows are not the only programming error that an attacker can leverage to exploit binaries. In these notes, we introduce the concept of **string format vulnerabilities** and describe how they can be used to both leak information from memory and modify *arbitrary* locations with *arbitrary* values. In short, string format vulnerabilities offer opportunities beyond what is possible for a simple buffer overflow. 
 
 One of the most common functions used in c is `printf`. In introductory Systems
 courses we learn how to read input from a file or stdin, perform some string
@@ -51,7 +54,7 @@ value = 21
 ```
 
 In the previous example we provided the address of the value variable but what
-if non is given explicitly? Well, `printf` will try to use the next address on
+if none is given explicitly? Well, `printf` will try to use the next address on
 the stack and write to it most likely ending in a segmentation fault. This
 leads to 2 questions: where is user input placed in memory? and can we point
 where `%n` writes to? The answer of the first question is it depends. The
@@ -106,7 +109,7 @@ we get the result
 which is interesting, but does not tell us if our input is on the stack. We probably
 need to print out more of the stack. So we run the following
 
-`./format1 "`python -c "print  'AAAA' + 'BBBB' +'%x ' * 200"`" | grep 41`
+```./format1 "`python -c "print  'AAAA' + 'BBBB' +'%x ' * 200"`" | grep 41```
 
 and we see that the output includes
 
@@ -127,7 +130,7 @@ We can see a bunch of addresses and in the middle we get
 
 `41414141 41414141 804a02c 25207825 78252078`
 
-Now I will leave up to you find the write padding needed so when you add `%n`
+Now I will leave up to you find the right padding needed so when you add `%n`
 to the end of you input string the address in question is `0x0804a02c`. This
 will change the value of the `target` and thus execute code previously not
 accesible to us.
@@ -148,7 +151,7 @@ we should do
 printf("%s", user_input)
 ```
 
-If the user passed format characters as its input it will simply interpret read
+If the user passed format characters as their input it will simply interpret read
 it as a string (due to `%s` being used). No sensitive information is leaked and no
 values on the stack are overwritten. As well, more modern compilers check for
 unsafe uses of format strings.
@@ -156,10 +159,18 @@ unsafe uses of format strings.
 There are existing defenses like stack canaries and ASLR to prevent a malicious user
 from exploiting your program. Stack canaries could prevent somebody from using
 `%n` to overwrite data on the stack. However, if you don't sanitize your user
-input it could leak information about key objects in memories and thus helping
+input it could leak information about key objects in memories and thus help
 an attacker overcome ASLR.
 
+### Extra Examples
+
+To see a more in depth walkthrough of the ideas from this article try following along with these writeups:
+
+1. [format3](/writeup/format3_writeup.html)
+
 ### Sources
+
+For more information about format strings and associated attacks, consider taking a look at the following links.
 
 1. https://www.cs.virginia.edu/~ww6r/CS4630/lectures/Format\_String\_Attack.pdf
 2. https://stackoverflow.com/questions/18681078/in-which-memory-segment-command-line-arguments-get-stored

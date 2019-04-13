@@ -1,16 +1,26 @@
 ---
-title:  "Lecture Notes: Stack0 and Basic Buffer Overflows"
+title:  "Lecture Notes: Basics of Buffer Overflows"
 date:   2019-03-12 08:00:00
-categories: lecture 
+categories: notes lecture
 layout: post
 ---
 
 
 In this lecture, we are going to dive right into exploiting binaries. We will
 begin with simple stack-based buffer overflows and work our way to the
-venerable stack-smashing example.
+venerable stack-smashing example. We try to answer important questions such as:
+What is arbitrary code execution? What are `setuid` binaries?  What is
+priviledge escalation? 
 
-### stack0 
+
+### Our First Challenge Binary
+
+This the source code for the `stack0` challenge binary. Your objective is to
+figure out how to exploit this binary. What do I mean by exploit? Well, loosely
+I mean that your job is to take control of how `stack0` executes to accomplish
+some nefarious goal. Here that goal is to read the contents of `flag.txt`;
+presumably because we don't have permission to read it directly. 
+
 
 
 ```c
@@ -37,20 +47,12 @@ int main(int argc, char **argv)
   }
 }
 ```
-
-I want everyone to take a look at this code. Try to understand what is
-happening and why I might be showing you this example. 
-
-This the source code for a challenge binary. Your objective is to figure out
-how to exploit that binary. What do I mean by exploit? Well, loosely I mean
-that your job is to take control of how that binary executes to accomplish some
-nefarious goal. Here that goal is to read the contents of `flag.txt`;
-presumably because we don't have permission to read it directly. 
+ 
 
 More generally, that goal involves gaining **arbitrary code execution** on the
-victim machine. This means I can execute whatever code I want. It should be
-straight-forward to see how arbitrary code execution can mean bad things for
-the owner of the machine. 
+target  machine. This means I (the attacker) can execute whatever code I want.
+It should be straight-forward to see how arbitrary code execution can mean bad
+things for the owner of the machine. 
 
 How we (the attacker) obtain arbitrary code execution is one of the primary
 subjects of this course; however, in this example the goal is actually much
@@ -319,4 +321,36 @@ r < 65.txt
 x/68bx $esp+0x1c
 c
 ```
+
+### Setuid Binaries
+
+Why is it that we have don't have permission to read "flag.txt" but when
+exploit the binary when read "flag.txt"? In other words, why does a binary
+(that we can run) have different permissions than we do?
+
+First, let's take a look at the stack4 binary using the `file` utility: `file
+./stack4`. The output includes a curious bit of text calling stack4 a "setuid"
+ELF executable.  What does "setuid" mean here? To find out, we start the same
+way we always do on Linux: reading the MAN page. 
+
+The man page gives us more information (specifically, about the C library
+funciton, but they are related). We can see that setuid stands for set user
+identity. It allows a process to run as if it was started by a particular user
+and, consequently, run with that user's permissions.  Setuid binaries are
+useful for acheiving **priviledge escalation**. 
+
+If we run `id` we can see information about the current user, including their
+user id and group id. We can use `cat /etc/passwd` to see all of the users on
+the system. For example, we see that "root" has a userid of 0. 
+
+Fortunately, a malicious user cannot simply write a program and use setuid to
+make that program run as root. The OS has permissions in place to prevent that
+(as we can posit from looking at the errors section of the man page). So what
+is it good for? It is often used to allow an unpriviledged user to access
+hardware features or to temporarily give a user elevated priviledges, e.g.,
+`ping` and `sudo` are both setuid binaries.  For an attacker, though, if he can
+exploit a setuid binary that is running as root, then he effectively has root
+priviledges. 
+
+
 
