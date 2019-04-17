@@ -3,6 +3,7 @@ title: "Lecture Notes: Basics of the Global Offset Table"
 date: 2019-03-27 09:00:00
 categories: notes lecture
 layout: post
+challenges: format2 heap3 format4 Doom heap\_smash argument\_clinic
 ---
 
 So far, we've mostly targeted return addresses on the stack for our exploits with the occasional manipulation of a function pointer. However, there are many other locations we can target to hi-jack the program's control flow. In this set of notes, we describe the **Global Offset Table** a particularly useful structure that contains plenty of interesting code pointers for us to manipulate.
