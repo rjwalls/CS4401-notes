@@ -4,6 +4,7 @@ date: 2019-03-22 09:00:00
 categories: lecture notes
 layout: post
 author: Juan Luis Herrero Estrada
+challenges: format0 format1 format2 format3 format4 argument\_clinic Doom
 ---
 
 Buffer overflows are not the only programming error that an attacker can leverage to exploit binaries. In these notes, we introduce the concept of **string format vulnerabilities** and describe how they can be used to both leak information from memory and modify *arbitrary* locations with *arbitrary* values. In short, string format vulnerabilities offer opportunities beyond what is possible for a simple buffer overflow. 
