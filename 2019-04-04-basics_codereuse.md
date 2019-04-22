@@ -3,7 +3,7 @@ title:  "Lecture Notes: Basics of Code Reuse"
 date:   2019-04-04 09:00:00
 categories: notes lecture 
 layout: post
-challenges: stack4 stack5 stack6 heap3 not\_so\_random Doom ssp\_buffer\_r2 Walls save\_the\_bees
+challenges: heap3 stack4 stack5 stack6
 ---
 
 
