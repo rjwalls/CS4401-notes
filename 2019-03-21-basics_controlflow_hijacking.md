@@ -279,7 +279,7 @@ process (i.e., force malloc to reallocate that memory).
 
 
 ```
-CHUNK Foo                              CHUNK Bar
+CHUNK Bar                              CHUNK Foo
   in use                               in free list
      +----------------------------------------+
      |                                        |
