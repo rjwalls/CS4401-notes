@@ -1,7 +1,8 @@
 ---
-title:  "Lecture Notes: peda for gdb"
+title:  "peda for gdb"
 date:   2019-04-19 14:00:00
 categories: notes
+author: Marc Reardon
 layout: post
 ---
 
@@ -222,7 +223,3 @@ ASLR is OFF
 For more resources:
    1. https://github.com/longld/peda
    2. https://github.com/ebtaleb/peda_cheatsheet/blob/master/peda.md
-
-Author:
-Marc Reardon
-April 19, 2019
