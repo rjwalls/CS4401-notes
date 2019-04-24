@@ -1,12 +1,13 @@
 ---
-title:  "Lecture Notes: peda for gdb"
+title:  "peda for gdb"
 date:   2019-04-19 14:00:00
 categories: notes
+author: Marc Reardon
 layout: post
 ---
 
-# PEDA - Python Exploit Development Assistance for GDB
 
+PEDA - Python Exploit Development Assistance for GDB
 
 PEDA enhances the display of gdb to display more information like registers, 
 stack memory, and dissassembled code. PEDA has a variety of built-in commands 
@@ -220,12 +221,6 @@ gdb-peda$ aslr
 ASLR is OFF
 ```
 
-
-
 For more resources:
-1. https://github.com/longld/peda
-2. https://github.com/ebtaleb/peda_cheatsheet/blob/master/peda.md
-
-Author:
-Marc Reardon
-April 19, 2019
+   1. https://github.com/longld/peda
+   2. https://github.com/ebtaleb/peda_cheatsheet/blob/master/peda.md
