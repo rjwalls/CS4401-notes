@@ -17,7 +17,7 @@ CCS'05.
 So how is CFI different from the other defenses we have been talking about?
 The intuition behind CFI is relatively straight-forward: If we see deviations
 between how the program is supposed to behave and how it actually behaves, then
-we know something bad is happening an we can halt the program.  For this to
+we know something bad is happening and we can halt the program.  For this to
 work we need three things:
  1. A definition of what the program should be doing.
  2. An efficient way of checking if behavior is expected.
@@ -31,7 +31,7 @@ calls a function, that counts as a control-flow transfer. Similarly, when the
 program returns from a function, that is a control-flow transfer. When an
 attacker overwrites a return address, they are manipulating a control-flow
 transfer. In a nutshell, CFI defenses check control-flow transfers at runtime
-to make sure the targets (e.g., the location a function is returning to) are a
+to make sure the targets (e.g., the location a function is returning to) are
 legal. 
 
 
