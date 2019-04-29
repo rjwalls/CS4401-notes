@@ -62,7 +62,7 @@ bool gt(int x, int y){
 }
 ```
 
-Let's draw out what the  which functions call which other functions. 
+Let's draw out what functions call which other functions. 
 
 ```
 
