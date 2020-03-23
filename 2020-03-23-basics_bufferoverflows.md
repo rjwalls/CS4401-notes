@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Basics of Buffer Overflows"
-date:   2099-03-12 08:00:00
+date:   2020-03-23 08:00:00
 categories: notes lecture
 layout: post
 challenges: stack0 stack1 stack2 stack3 heap0 heap3
@@ -10,8 +10,10 @@ challenges: stack0 stack1 stack2 stack3 heap0 heap3
 In this lecture, we are going to dive right into exploiting binaries. We will
 begin with simple stack-based buffer overflows and work our way to the
 venerable stack-smashing example. We try to answer important questions such as:
-What is arbitrary code execution? What are `setuid` binaries?  What is
-priviledge escalation? 
+
+ - What is arbitrary code execution? 
+ - What are `setuid` binaries?  
+ - What is privilege escalation? 
 
 
 ### Our First Challenge Binary
