@@ -1,6 +1,6 @@
 ---
 title: "Lecture Notes: Basics of Format String Vulnerabilities"
-date: 2019-03-22 09:00:00
+date: 2099-03-22 09:00:00
 categories: lecture notes
 layout: post
 author: Juan Luis Herrero Estrada

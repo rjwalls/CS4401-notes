@@ -1,6 +1,6 @@
 ---
 title:  "Quick Notes: Why Doesn't it work outside of GDB?"
-date:   2019-03-21 09:00:00
+date:   2099-03-21 09:00:00
 categories: notes quick
 layout: post
 ---

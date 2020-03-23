@@ -1,6 +1,6 @@
 ---
 title: "Lecture Notes: Basics of the Global Offset Table"
-date: 2019-03-27 09:00:00
+date: 2099-03-27 09:00:00
 categories: notes lecture
 layout: post
 challenges: format2 heap3 format4

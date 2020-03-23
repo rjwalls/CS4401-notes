@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Basics of Code Reuse"
-date:   2019-04-04 09:00:00
+date:   2099-04-04 09:00:00
 categories: notes lecture 
 layout: post
 challenges: heap3 stack4 stack5 stack6

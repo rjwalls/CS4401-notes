@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Basics of Stack Canaries"
-date:   2019-03-19 09:00:00
+date:   2099-03-19 09:00:00
 categories: notes lecture
 layout: post
 ---

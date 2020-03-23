@@ -1,6 +1,6 @@
 ---
 title:  "Quick Notes: Core Dumps"
-date:   2019-03-13 08:00:00
+date:   2099-03-13 08:00:00
 categories: notes quick
 layout: post
 ---

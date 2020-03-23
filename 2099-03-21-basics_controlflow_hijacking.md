@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Basics of Control-flow Hijacking"
-date:   2019-03-21 09:00:00
+date:   2099-03-21 09:00:00
 categories: notes lecture
 layout: post
 challenges: heap1r heap3r

@@ -1,6 +1,6 @@
 ---
 title:  "Quick Notes: PEDA and GDB"
-date:   2019-04-19 14:00:00
+date:   2099-04-19 14:00:00
 categories: notes
 author: Marc Reardon
 layout: post
