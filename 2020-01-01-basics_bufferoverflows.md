@@ -21,8 +21,8 @@ venerable stack-smashing example. We try to answer important questions such as:
 This the source code for the `stack0` challenge binary. Your objective is to
 figure out how to exploit this binary. What do I mean by exploit? Well, loosely
 I mean that your job is to take control of how `stack0` executes to accomplish
-some nefarious goal. Here that goal is to read the contents of `flag.txt`;
-presumably because we don't have permission to read it directly. 
+some goal. Here that goal is to read the contents of `flag.txt`; presumably
+because we don't have permission to read it directly. 
 
 
 
@@ -97,9 +97,15 @@ will keep copying bytes and blow past the end of the array, i.e., write into
 adjacent memory. 
 
 This type of bug is called a **buffer overflow**. Now, machines have a lot of
-memory, so what does in matter if a few bytes get overwritten?  Now we have to
-consider what is next to this buffer in memory. Let's take a step back to fill
-in some details.
+memory, so what does in matter if a few bytes get overwritten?  Sometimes, it
+doesn't (seem to) matter! Your program may continue executing, at least for a
+little while, without any apparent issue.
+
+To understand the true problem with buffer overflows we have to consider what
+is next to our buffer in memory. 
+
+Let's take a step back to fill in some details. Many of these details  will
+likely be familiar to you from other classes.
 
 *Virtual Address Space:* The operating system provides many wonderful
 abstractions to processes executing on the machine. One of the most important
@@ -144,15 +150,19 @@ address at the top. We can equivalently visualize memory in other orientations
 (up, down, and sideways). Different text will use different orientations and
 this will cause confusion.
 
-It is also common to represent memory addresses using hex notation. Since our
-challenge binary/VM is only 32-bit,[^32] that means we have a 32-bit virtual address
-space and each address can be represented in 4 bytes (or 8 hex digits). 
+It is also common to represent memory addresses using hex notation. In this
+course, we will be working with both 32-bit and 64-bit binaries. The former
+uses a 32-bit virtual address
+space and each address can be represented in 4 bytes (or 8 hex digits) and the
+latter uses a 64-bit virtual address space which requires 8 bytes.
 
-[^32]: There are lots of ways we can determine if a binary targets a 32 or 64-bit architecture, but the easiest is probably the `file` command: `file bin_name`. 
+Side note: There are lots of ways we can determine if a binary targets a 32 or
+64-bit architecture, but the easiest is probably the `file` command: `file
+bin_name`. 
 
-Getting back to gets and our buffer overflow: gets will happily copy whatever
+**Getting back to gets and our buffer overflow:** gets will happily copy whatever
 input we (aka the attacker) provide, even if that input is larger than the
-buffer. This means our attacker can overwrite adjacent memory. So that is
+buffer. This means our attacker can overwrite adjacent memory. So what is
 adjacent to our buffer? In our challenge binary, the buffer is a local
 variable. We know that local variables are stored on the stack. So the attacker
 can overwrite information that is stored on the stack. Hmmm, the `modified`
@@ -210,13 +220,13 @@ isn't allowed. In this example, our input overwrote the modified variable and
 then just kept on overwriting other values in memory. One of those other values
 was the return address. 
 
-To understand the concept of a return address, we need to
+**Return Addresses.** To understand the concept of a return address, we need to
 remember that process memory is also used for code. As we just discussed, 
 the 'code' that is executed isn't the C code that we showed earlier. Instead,
 that code is sequence of machine instructions. When a process is executing, the
 CPU will iterate through this sequence of instructions and perform the
 specified actions. We often visualize these machine instructions using assembly
-language (even though there ASM is still a higher-level of abstraction).    
+language (even though Assembly itself is still an abstraction).    
 
 The x86 architecture uses a special register, called the instruction pointer,
 to keep track of what instruction to execute next, i.e., it stores the memory
@@ -228,15 +238,16 @@ can only store a single address, we have to find some other place to save the
 old pointer. The answer is to put it in memory, but where in memory? That's
 another job for the stack.
 
-Getting back to the seg fault, what is happening then? We overflow the buffer,
-which overwrites `modified` and eventually overwrites the saved instruction
-pointer (i.e., the return address). So when we return from the function, by
-loading the old instruction pointer from the stack into our IP register, the
-address is now just a bunch of 'aaaa' bytes. That address doesn't contain
+With our new knowledge of return addresses, we can now understand was is
+causing the segmentation fault. We overflow the buffer, which overwrites
+`modified` and eventually overwrites the saved instruction pointer (i.e., the
+return address). So when we return from the function, by loading the old
+instruction pointer from the stack into our IP register, the address is now
+just a bunch of 'aaaa' bytes. The address 'aaaa' (probably) doesn't contain
 anything, in fact it probably hasn't even be allocated so the OS freaks out and
 kills the process. 
 
-We can fix our exploit code by only overwriting the 'modified' variable. 
+Note: we can fix our exploit code by only overwriting the 'modified' variable. 
 
 
 ### Looking at the disassembly
