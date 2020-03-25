@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Basics of Buffer Overflows"
-date:   2020-03-23 08:00:00
+date:   2020-03-30 01:00:00
 categories: notes lecture
 layout: post
 challenges: stack0 stack1 stack2 stack3 heap0 heap3
