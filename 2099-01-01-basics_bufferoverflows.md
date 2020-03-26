@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Basics of Buffer Overflows"
-date:   2020-03-30 01:00:00
+date:   2020-03-26 01:00:00
 categories: notes lecture
 layout: post
 challenges: stack0 stack1 stack2 stack3 heap0 heap3
@@ -14,6 +14,15 @@ venerable stack-smashing example. We try to answer important questions such as:
  - What is arbitrary code execution? 
  - What are `setuid` binaries?  
  - What is privilege escalation? 
+
+
+
+### Video
+
+<iframe width="560" height="315"
+src="https://www.youtube.com/embed/QrQua0BLCmQ" frameborder="0"
+allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+allowfullscreen></iframe>
 
 
 ### Our First Challenge Binary
@@ -232,11 +241,12 @@ The x86 architecture uses a special register, called the instruction pointer,
 to keep track of what instruction to execute next, i.e., it stores the memory
 address of the next instruction. Think about what happens when a function call
 occurs. The instruction pointer must changed to point to the function in
-memory, but the old instruction point must also be saved so that the CPU can
-return to where it was before. Given that there instruction pointer register
-can only store a single address, we have to find some other place to save the
-old pointer. The answer is to put it in memory, but where in memory? That's
-another job for the stack.
+memory, but current value of the instruction pointer must first be saved so
+that the CPU can return to where it was before (i.e., the calling function). We
+call this saved value, the return address. Given that the instruction pointer
+register can only store a single address, we have to find some other place to
+save the old pointer. The answer is to put it in memory, but where in memory?
+That's another job for the stack.
 
 With our new knowledge of return addresses, we can now understand was is
 causing the segmentation fault. We overflow the buffer, which overwrites
