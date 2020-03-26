@@ -106,7 +106,7 @@ will keep copying bytes and blow past the end of the array, i.e., write into
 adjacent memory. 
 
 This type of bug is called a **buffer overflow**. Now, machines have a lot of
-memory, so what does in matter if a few bytes get overwritten?  Sometimes, it
+memory, so what does it matter if a few bytes get overwritten?  Sometimes, it
 doesn't (seem to) matter! Your program may continue executing, at least for a
 little while, without any apparent issue.
 
