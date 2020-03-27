@@ -14,3 +14,18 @@ how to submit flags.
 ### Video!
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/ncetH_pBTeg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+### Additional Tips
+
+**Problem: Scrolling Repeated Text.** If you open epic treasure via docker and
+have an issue (likely with tmux) where the text is printing incorrectly to the
+terminal, try typing `exit` (and hitting enter, of course) to drop out of the
+tmux session. 
+
+**Problem: Windows and Docker.** Some students were able to get the docker
+image working in Powershell with the following modified command:
+
+```
+docker run -v ${pwd}:/root/host-share --privileged -it --workdir=/root ctfhacker/epictreasure
+```
