@@ -27,7 +27,7 @@ allowfullscreen></iframe>
 
 ### Our First Challenge Binary
 
-This the source code for the `stack0` challenge binary. Your objective is to
+This is the source code for the `stack0` challenge binary. Your objective is to
 figure out how to exploit this binary. What do I mean by exploit? Well, loosely
 I mean that your job is to take control of how `stack0` executes to accomplish
 some goal. Here that goal is to read the contents of `flag.txt`; presumably
@@ -221,7 +221,7 @@ buffer
 The `volatile` keyword is included here as it forces the compiler not to
 optimize out the `modified` variable. This leads us to an important point:
 **the compiler is going to transform the c code and we don't know what the
-actually executed code will look like unless we examine the binary.** 
+actual executed code will look like unless we examine the binary.** 
 
 Another thing we will notice is that "segmentation fault" error. This means
 that our actions have caused the program to attempt to use memory in a way that
@@ -232,7 +232,7 @@ was the return address.
 **Return Addresses.** To understand the concept of a return address, we need to
 remember that process memory is also used for code. As we just discussed, 
 the 'code' that is executed isn't the C code that we showed earlier. Instead,
-that code is sequence of machine instructions. When a process is executing, the
+that code is a sequence of machine instructions. When a process is executing, the
 CPU will iterate through this sequence of instructions and perform the
 specified actions. We often visualize these machine instructions using assembly
 language (even though Assembly itself is still an abstraction).    
@@ -240,15 +240,15 @@ language (even though Assembly itself is still an abstraction).
 The x86 architecture uses a special register, called the instruction pointer,
 to keep track of what instruction to execute next, i.e., it stores the memory
 address of the next instruction. Think about what happens when a function call
-occurs. The instruction pointer must changed to point to the function in
-memory, but current value of the instruction pointer must first be saved so
+occurs. The instruction pointer must change to point to the function in
+memory, but the current value of the instruction pointer must first be saved so
 that the CPU can return to where it was before (i.e., the calling function). We
 call this saved value, the return address. Given that the instruction pointer
 register can only store a single address, we have to find some other place to
 save the old pointer. The answer is to put it in memory, but where in memory?
 That's another job for the stack.
 
-With our new knowledge of return addresses, we can now understand was is
+With our new knowledge of return addresses, we can now understand what is
 causing the segmentation fault. We overflow the buffer, which overwrites
 `modified` and eventually overwrites the saved instruction pointer (i.e., the
 return address). So when we return from the function, by loading the old
@@ -263,7 +263,7 @@ Note: we can fix our exploit code by only overwriting the 'modified' variable.
 ### Looking at the disassembly
 
 We are going to use `gdb` to take a closer look at the instructions and memory
-that comprise our challenge binary.[^wrong] The first thing we are going to go is
+that comprise our challenge binary.[^wrong] The first thing we are going to do is
 change how gdb displays assembly:
 
 [^wrong]: Actually, this disassembly is for a different version of the code that is similar but does not read from `flag.txt`.
@@ -312,7 +312,7 @@ We can surmise that location of the modified variable is `esp + 0x5c` because
 of the initialization `mov` at 0x080483fd and `mov,test,je` sequences ending at
 0x08048417. Similarly, we guess that `esp + 0x1c` is the start of `buffer`
 because that address is passed to gets via the eax register getting pushed on
-the stack, The 32-bit x86 **calling convention** demands that arguments are
+the stack. The 32-bit x86 **calling convention** demands that arguments are
 passed to functions via the stack.
 
 We know know the relative positions of `modified` and `buffer` in memory. Some
@@ -348,8 +348,8 @@ c
 
 ### Setuid Binaries
 
-Why is it that we have don't have permission to read "flag.txt" but when
-exploit the binary when read "flag.txt"? In other words, why does a binary
+Why is it that we don't have permission to read "flag.txt" but when we
+exploit the binary we can read "flag.txt"? In other words, why does a binary
 (that we can run) have different permissions than we do?
 
 First, let's take a look at the stack4 binary using the `file` utility: `file
@@ -359,7 +359,7 @@ way we always do on Linux: reading the MAN page.
 
 The man page gives us more information (specifically, about the C library
 funciton, but they are related). We can see that setuid stands for set user
-identity. It allows a process to run as if it was started by a particular user
+identity. It allows a process to run as if it were started by a particular user
 and, consequently, run with that user's permissions.  Setuid binaries are
 useful for acheiving **priviledge escalation**. 
 
