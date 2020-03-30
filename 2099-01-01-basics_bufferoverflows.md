@@ -74,7 +74,7 @@ Broadly, our recipe for success calls for two ingredients. First, the program
 needs to contain a bug. Second, we need some way to supply input to the program
 to trigger that bug. Let's focus on supplying the input for now.
 
-There many different ways to supply input to a program. So how does this
+There are many different ways to supply input to a program. So how does this
 example program take input? For many challenge binaries, the most obvious way
 is to supply input via `stdin` (e.g., using `gets()`). But we can also provide
 command line arguments and  environment variables. In other programs, external
