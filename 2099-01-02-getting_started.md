@@ -13,8 +13,7 @@ how to submit flags.
 
 ### Video!
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/ncetH_pBTeg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
+<iframe width="560" height="315" src="https://www.youtube.com/embed/hDTuJGkkG2c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### Additional Tips
 
