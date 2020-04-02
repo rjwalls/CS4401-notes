@@ -85,7 +85,7 @@ that there are only a small number of registers that a function can use, and
 all functions use those registers. Once again this depends on the architecture,
 this means that a function may have to save the previous value of a register
 before it can be used, i.e., save and restore the value so when the previous
-function executes the register still contains the value that it expects.
+function executes, the register still contains the value that it expects.
 
 Where are these registers saved? On the stack of course. You may hear this
 process referred to as **register spilling**. Have we seen this behavior in the
