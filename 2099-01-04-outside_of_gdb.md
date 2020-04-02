@@ -64,14 +64,25 @@ the Stack for Fun and Profit". If you have a memory leak, then you can
 (probably) directly figure out the location of the stack based on the contents
 of the leaked memory. 
 
-**Sometimes this works:** GDB (at least some versions) sets two environment
-variables that don't exist outside of GDB, `LINES` and `COLUMNS`.  Sometimes,
-we can just unset those two environment variables and the memory addresses will
-be the same when running the process inside of and outside of GDB. 
+**Manipulating the environment variables.** It might also help to manipulate
+the environment variables on the machine to make stack addresses more
+predictable. You can:
+ - view  environment variables with `printenv`, 
+ - delete a variable with `unset env VARNAME`, 
+ - change a value with `VARNAME='Foo'`
+ - add new variable with `export VARNAME='foo'`
+ - set a variable used for a single process `VARNAME='f' ./binary`.
+
+In particular, GDB (at least some versions) sets two environment variables that
+do not exist outside of GDB, `LINES` and `COLUMNS`. Sometimes, we can just
+unset those two environment variables (when in GDB) and the memory addresses
+will be the same when running the process inside of and outside of GDB---also
+assuming you run the binary using the absolute path and same command line
+arguments.
+
 
 ```
+# In GDB
+show environment
 unset env LINES
 unset env COLUMNS
-```
-
-
