@@ -17,8 +17,8 @@ in the last lecture. He defines a buffer as a "contiguous block of computer
 memory that holds multiple instances of the same data type", whereas I
 typically define a buffer more as a "contiguous block of memory associated with
 a data type." The difference here is minor, but my definition is more broad in
-that it allows us to refer to the four bytes associated with a single integer
-has as a buffer also. 
+that it allows us to refer to the four bytes associated with a single integer as
+a buffer also. 
 
 #### Memory Permissions
 
