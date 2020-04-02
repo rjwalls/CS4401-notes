@@ -54,7 +54,7 @@ a degree that we can change memory permissions.*
 #### Code Injection
 
 If, as an attacker, you can't overwrite/modify the existing code for a process,
-then the logical next step to supply you own malicious code. This class of
+then the logical next step to supply your own malicious code. This class of
 attack is generally referred to as **code injection**. That is what the "Shell
 Code" section of smashing the stack is about.
 
