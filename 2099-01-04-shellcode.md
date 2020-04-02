@@ -7,7 +7,7 @@ challenges: stack4 stack5 stack6
 ---
 
 If, as an attacker, you can't overwrite/modify the existing code for a process,
-then the logical next step to supply your own malicious code. This class of
+then the logical next step to supply you own malicious code. This class of
 attack is generally referred to as **code injection**. When that code launches
 a shell (giving you a convenient interface to the hacked machine), that injected
 code is called **shellcode.** 
