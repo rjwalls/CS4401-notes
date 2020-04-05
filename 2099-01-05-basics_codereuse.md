@@ -3,7 +3,7 @@ title:  "Lecture Notes: Basics of Code Reuse"
 date:   2020-04-05 01:01:00
 categories: notes lecture 
 layout: post
-challenges: heap3 stack4 stack5 stack6
+challenges: heap1 heap2 heap3 stack4 stack5 stack6
 ---
 
 
