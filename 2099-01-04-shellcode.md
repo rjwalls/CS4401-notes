@@ -222,6 +222,15 @@ void main() {
 
 ### Misc. Tips
 
+
+**32-bit vs. 64-bit shell code.** Be careful that you don't use 32-bit
+shellcode on a 64-bit system. A good indicator is the use of `int 0x80` versus
+`syscall`, the former is used primarily on 32-bit systems and the latter is
+used in 64-bit.  Note, you can use `int 0x80` in a 64-bit system but it can be
+tricky to make sure that the pointer sizes are only 4 bytes (e.g., pointers to
+the stack typically require more than 4 bytes). 
+
+
 **Why does the popped shell exit immediately?** Sometimes when you pop a shell,
 it appears like nothing happened even though your shellcode seemed to execute.
 This could occur because stdin is closed, causing the shell to exit
@@ -247,7 +256,9 @@ a more roundabout approach:
  - match the addresses (assuming no aslr), the heap might be labeled `anon` in
    `pmap`.
 
-Other notes:
+**Debugging tips:**
  - Use the `int3` instruction to debug shellcode. It's simple to use, just throw
 in the opcode 0xCC. The following is a good starter: `print '\x90'*100 + '\xCC'*4`.
-  
+ - The return value of a system call will be placed in the `rax` register. If
+   the return is negative, an error occurred; subtract the return value from
+zero and look up the number with `errno -l`.  
