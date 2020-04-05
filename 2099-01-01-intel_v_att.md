@@ -7,7 +7,7 @@ layout: post
 
 Unfortunately, you are often going to see both At&t and Intel syntax to
 represent assembly instructions, so you will have to be comfortable with both.
-Some tools---such as GDB and objdump---use Att syntax as the default while
+Some tools---such as GDB and objdump---use At&t syntax as the default while
 others---e.g., IDA and PEDA---use Intel syntax.
 
 Here are some of the major differences with examples:

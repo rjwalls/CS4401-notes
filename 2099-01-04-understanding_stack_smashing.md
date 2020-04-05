@@ -17,8 +17,8 @@ in the last lecture. He defines a buffer as a "contiguous block of computer
 memory that holds multiple instances of the same data type", whereas I
 typically define a buffer more as a "contiguous block of memory associated with
 a data type." The difference here is minor, but my definition is more broad in
-that it allows us to refer to the four bytes associated with a single integer
-has as a buffer also. 
+that it allows us to refer to the four bytes associated with a single integer as
+a buffer also. 
 
 #### Memory Permissions
 
@@ -54,7 +54,7 @@ a degree that we can change memory permissions.*
 #### Code Injection
 
 If, as an attacker, you can't overwrite/modify the existing code for a process,
-then the logical next step to supply you own malicious code. This class of
+then the logical next step to supply your own malicious code. This class of
 attack is generally referred to as **code injection**. That is what the "Shell
 Code" section of smashing the stack is about.
 
@@ -85,7 +85,7 @@ that there are only a small number of registers that a function can use, and
 all functions use those registers. Once again this depends on the architecture,
 this means that a function may have to save the previous value of a register
 before it can be used, i.e., save and restore the value so when the previous
-function executes the register still contains the value that it expects.
+function executes, the register still contains the value that it expects.
 
 Where are these registers saved? On the stack of course. You may hear this
 process referred to as **register spilling**. Have we seen this behavior in the

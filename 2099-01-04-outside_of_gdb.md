@@ -17,7 +17,7 @@ different values for those variables then the amount of stack space used to
 store the environment variables will be different. Consequently, the stack
 addresses further down in the stack will also differ. 
 
-But many other factors can influence the state of the stack consider the
+But many other factors can influence the state of the stack. Consider the
 following test code:
 
 ```c
