@@ -295,7 +295,7 @@ grep on the .SO file), but let's do it directly in GDB this time: `find
 command to work.
 
 Putting everything together, we have an attack that looks very similar to how
-we exploited the 32-bit binary. The big different is that added the additional
+we exploited the 32-bit binary. The big difference is that added the additional
 step to call our gadget and load the address of "/bin/sh" into `rdi`. 
 
 ```python
