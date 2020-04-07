@@ -259,6 +259,9 @@ a more roundabout approach:
 **Debugging tips:**
  - Use the `int3` instruction to debug shellcode. It's simple to use, just throw
 in the opcode 0xCC. The following is a good starter: `print '\x90'*100 + '\xCC'*4`.
+ - If you are getting an `errno` of `-38` (i.e., function not implemented) then
+   make sure that you have the right argument in `rax` when you issue the
+`syscall`. 
  - The return value of a system call will be placed in the `rax` register. If
    the return is negative, an error occurred; subtract the return value from
 zero and look up the number with `errno -l`.  
