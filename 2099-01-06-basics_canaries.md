@@ -1,8 +1,9 @@
 ---
 title:  "Lecture Notes: Basics of Stack Canaries"
-date:   2099-03-19 09:00:00
+date:   2020-04-09 01:01:01
 categories: notes lecture
 layout: post
+challenges: not-so-random ssp-buffer
 ---
 
 How can we protect our binaries from stack-based buffer overflows?  Assuming we
