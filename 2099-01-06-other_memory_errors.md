@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Other Memory Errors"
-date:   2099-04-08 01:01:00
+date:   2020-04-08 01:01:00
 categories: notes lecture
 layout: post
 challenges: heap1r heap3r
