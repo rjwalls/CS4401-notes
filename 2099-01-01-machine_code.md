@@ -13,7 +13,7 @@ This is a Sparknotes version of machine code. It includes what registers are use
 -   Different data types have different prefixes as well in ATT syntax
 
 ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/data_types.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/data_types.png)
 
 -   Operations access the Least significant bytes of the data they're mainpulating. For instance calling movb on a quad word would only take the least significant byte
 -   Registers:
@@ -63,16 +63,16 @@ Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubuserco
 	-   **leaq S, D** load address at S into D. S is an arithmetic address (see the above section) and D is a register.
 	-   **SA_** Shift arithmetic (or logical) left or right
 ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/arith_ops.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/arith_ops.png)
 	- These are the other arithmetic operations. They are pretty self-explanatory from the diagram. In crazy cases you get 128 bit words which can be manipulated with these instructions
 ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/full_arith_ops.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/full_arith_ops.png)
 
 -   Conditional and flags
 
 	-   In x86_64 we have multiple flags that can get set when we perform a comparison
 	- ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/flags.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/flags.png)
 
 	-   **Flags** (consider the equation t=a+b for examples)
 		-   **CF**: Carry flag: This gets set if the most recent operation generated a carry out (mostly used to detect overflow in unsigned operations) (t < a)
@@ -82,24 +82,27 @@ Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubuserco
 
 - Comparisons
 	- ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/comparisons.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/comparisons.png)
 	-   cmp(b,w,l,q) S1, S2: Performs S2-S1 to set the above flags
 	-  	test(b,w,l,q) S1 S2: Peforms S1&S2 to set condition flags
 
 - **Set** sets the value of the specified register based on the associated conditions
 	- ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/set_instructions.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/set_instructions.png)
 - Program Flow Changers:
 	- The jump commands go to a specific label
 	-   ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/jump_instructions.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/jump_instructions.png)
 	- We can also move based on a specific conditions:
 	- ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/move_instructions.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/move_instructions.png)
 -   Jump Tables: Tables that have code location labels. The machine code can then use a register to find the corresponding location of code to jump to and execute.
 -   The stack
 	-   All information regarding the local data for a function gets stored on the sack
 	- ![Credit:   
-Computer Systems A Programmers Perspective 3rd Edition](https://raw.githubusercontent.com/Kdoje/CS4401-notes/master/assets/machine-code/stack_diagram.png)
+Computer Systems A Programmers Perspective 3rd Edition](assets/machine-code/stack_diagram.png)
 
 
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbNjA5NzUzMzA5XX0=
+-->
