@@ -11,14 +11,17 @@ In these notes, we introduce the concept of **string format vulnerabilities**
 and describe how they can be used to both leak information from memory and
 modify *arbitrary* locations with *arbitrary* values. In short, string format
 vulnerabilities offer opportunities beyond what is possible for a simple buffer
-overflow. 
+overflow.
+
+### What Happens When the Attacker Controls the Format String
 
 One of the most common functions used in c is `printf`. In introductory Systems
 courses we learn how to read input from a file or stdin, perform some string
 manipulation, and display the result on the command line using `printf`. Most
 of the time you've used format specifiers---such as `%s` for strings, `%d` for
 integers, and `%f` for floats---which are matched with some number of variables
-to print the value of those variables. 
+to print the value of those variables. Note: the information below also applies
+to other functions that use format strings, such as `sprintf` and `fprintf`.
 
 However, when there are more format specifiers than variables things can go
 wrong. In the worst case,  such a mistake might allow an attacker to read from
@@ -41,7 +44,7 @@ addresses of those two strings on the stack. Of course, no such strings exist.
 So printf will grab the four bytes from the stack for each non-address (based
 on where those addresses should be placed if they were passed as arguments)
 and, most likely, cause a segmentation fault when those pointers are
-dereferenced.
+dereferenced. 
 
 Let's consider a slightly altered version of this program:
 
@@ -59,7 +62,9 @@ arguments as if those arguments were unsigned integers. In other words, if an
 attacker can supply the format specifier of "%x", then she can *leak the value
 of memory values on the stack.* While such memory leaks may seem of little
 consequence, these leaks can provide the attacker with the information she
-needs to bypass defenses like stack canaries and ASLR!
+needs to bypass defenses like stack canaries and ASLR! 
+
+### Using Format Strings to Enable Arbitrary Writes 
 
 The problem extends beyond leaking memory. In particular, `printf` has another
 interesting format character, `%n`, which *writes* the number of characters
@@ -98,7 +103,7 @@ are correct. And we already know how powerful a write-what-where vulnerability
 can be for an attacker, e.g., we can hijack the control-flow by targeting the
 global offset table.
 
-### Example
+### Simple Example
 
 Consider how we might exploit a binary with the following C code:
 
