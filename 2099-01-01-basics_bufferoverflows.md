@@ -16,7 +16,6 @@ venerable stack-smashing example. We try to answer important questions such as:
  - What is privilege escalation? 
 
 
-
 ### Video
 
 <iframe width="560" height="315"
