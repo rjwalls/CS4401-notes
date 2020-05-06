@@ -360,7 +360,7 @@ The man page gives us more information (specifically, about the C library
 funciton, but they are related). We can see that setuid stands for set user
 identity. It allows a process to run as if it were started by a particular user
 and, consequently, run with that user's permissions.  Setuid binaries are
-useful for acheiving **priviledge escalation**. 
+useful for achieving **privilege escalation**. 
 
 If we run `id` we can see information about the current user, including their
 user id and group id. We can use `cat /etc/passwd` to see all of the users on
@@ -369,8 +369,8 @@ the system. For example, we see that "root" has a userid of 0.
 Fortunately, a malicious user cannot simply write a program and use setuid to
 make that program run as root. The OS has permissions in place to prevent that
 (as we can posit from looking at the errors section of the man page). So what
-is it good for? It is often used to allow an unpriviledged user to access
-hardware features or to temporarily give a user elevated priviledges, e.g.,
+is it good for? It is often used to allow an unprivileged user to access
+hardware features or to temporarily give a user elevated privileges, e.g.,
 `ping` and `sudo` are both setuid binaries.  For an attacker, though, if he can
 exploit a setuid binary that is running as root, then he effectively has root
 priviledges. 
