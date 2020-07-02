@@ -18,7 +18,7 @@ overflow.
 One of the most common functions used in c is `printf`. In introductory Systems
 courses we learn how to read input from a file or stdin, perform some string
 manipulation, and display the result on the command line using `printf`. Most
-of the time you've used format specifiers---such as `%s` for strings, `%d` for
+of the time, you've used format specifiers---such as `%s` for strings, `%d` for
 integers, and `%f` for floats---which are matched with some number of variables
 to print the value of those variables. Note: the information below also applies
 to other functions that use format strings, such as `sprintf` and `fprintf`.
@@ -27,7 +27,7 @@ However, when there are more format specifiers than variables things can go
 wrong. In the worst case,  such a mistake might allow an attacker to read from
 or write into arbitrary memory locations. 
 
-Consider, the following 32-bit C program.
+Consider the following 32-bit C program.
 
 ```c
 char buffer[64];
@@ -99,7 +99,7 @@ At this point you might be thinking: "Hmmm, if I can control the format string
 argument to `printf`, and I can leverage that ability to also control  how many
 characters are written via `printf`, then all I need to do is control the
 address written to by `%n` and I have a write-what-where vulnerability." You
-are correct. And we already know how powerful a write-what-where vulnerability
+would be correct. We already know how powerful a write-what-where vulnerability
 can be for an attacker, e.g., we can hijack the control-flow by targeting the
 global offset table.
 
@@ -162,7 +162,7 @@ print unhex("41410031 42424141 78254242 20782520 25207825 78252078 20782520".rep
 
 ```
 
-If we account for transposition due to alignment and endianess, this string
+If we account for transposition due to alignment and endianness, this string
 looks like part of our input.  In other words, we managed to leak enough memory
 to find our own input string on the stack!
 
@@ -171,9 +171,9 @@ At this point, we know:
  2) we have complete control over the format string, and 
  3) we can control some values on the stack.
 
-If we use "%n" as put of our input and  are clever in how we construct our
+If we use "%n" as part of our input and  are clever in how we construct our
 format string, then we can directly control where on the stack `printf` looks
-for the `%n` address argument. That is, we can control address of the write.
+for the `%n` address argument. That is, we can control the address of the write.
 For this challenge, we want to change the value of the global variable `target`
 and, thus, we want our `%n` to trigger a write to `target`. Fortunately, we do
 not need to worry about what value gets written there (as long as it is not
@@ -192,7 +192,7 @@ and we have something like:
 
 The final step is figuring out how many '%x' format specifiers need to be used
 in the input string to have `printf` look for the argument for '%n' at the same
-location on the stack that we've placed the address of target. This process
+location on the stack that we've placed the address of `target`. This process
 might take a bit of guess-and-check and maybe some leading padding too (e.g.,
 those 'A' characters at the start). 
    
@@ -206,13 +206,13 @@ format characters as their input `printf` will simply interpret read
 it as a string literal---no sensitive information will be leaked and no
 values on the stack are overwritten. 
 
-Modern compilers will often warn of usage format string usage, so be sure the
+Modern compilers will often warn of usage format string usage, so be sure to 
 heed the warnings! 
 
 
 ### Illustrating the Behavior of %n
 
-The following code snippet---which you should run yourself---illustrates some
+The following code snippet, which you should run yourself, illustrates some
 of the behaviors of the `%n` format specifier that often confuse students. 
 
 ```c
