@@ -47,32 +47,32 @@ decryption such as entering a password on their personal computer.
 
 How can the scope of a search be well-defined for electronic searches?
  - Given how easy it is to hide information on a computer, for example, how can the scope of the search be limited without impeding the ability to find actual evidence? 
-  + Does this give the searcher the ability to open any file on the computer?
+   + Does this give the searcher the ability to open any file on the computer?
  - Is the computer akin to a container (like a drawer in a house that might contain contraband) whose contents need to be searched with particularity? How can bounds be set on this container like a physical one?
  - What about all of the factors that differentiate electronics from physical containers?
-  + The persistence of the evidence stored on them
-  + The volume of information kept on them
-  + The prevalence of many types of electronic items (everyone has a smart phone)
-  + How easy it is to make an exact copy (is that a seizure?)
+   + The persistence of the evidence stored on them
+   + The volume of information kept on them
+   + The prevalence of many types of electronic items (everyone has a smart phone)
+   + How easy it is to make an exact copy (is that a seizure?)
 
 How should the plain view doctrine apply to electronic devices?
  - What if a third party is responsible for searching the device?
 
 How can we apply the Katz test to electronic communications?
  - Does encrypting a message demonstrate a reasonable expectation of privacy under the Katz test?
-  + Does it satisfy both the subjective and objective expectations of privacy?
-  + How does it compare to speaking in another language and expecting no one
+   + Does it satisfy both the subjective and objective expectations of privacy?
+   + How does it compare to speaking in another language and expecting no one
 will be able to translate what you've said?
-  + What about very easy to break encryption?
-  + How does it compare to the situation of a sealed envelope or a postcard?
+   + What about very easy to break encryption?
+   + How does it compare to the situation of a sealed envelope or a postcard?
  - How much does the average consumer’s technological knowledge contribute to the answer to this question?
  - How does the third party doctrine apply to more modern technologies and forms of communication, like text messages or email?
 
 In the “In re…” opinion, was the foregone conclusion doctrine correctly applied?
  - When entering the password, what testimony is being given?
-  + Is it only, "I know the password"?
-  + Is it, "I own this device"?
-  + Is it testimony about any of the contents beyond the password?
+   + Is it only, "I know the password"?
+   + Is it, "I own this device"?
+   + Is it testimony about any of the contents beyond the password?
  - Is there a distinction to be made between entering the password vs. telling the password to the authorities?
 
 Would the conclusion be different if the method to unlock the computer were not a password, but a biometric one, like fingerprint or facial recognition software?
