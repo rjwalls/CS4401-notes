@@ -1,5 +1,5 @@
 ---
-title: "Lecture Notes: Getting Started with the Course Infrastructure"
+title: "Lecture Notes: Setting up your Local Environment for Challenge Solving"
 date: 2020-03-26 01:01:00
 categories: notes lecture 
 layout: post
@@ -17,10 +17,10 @@ how to submit flags.
 
 ### Additional Tips
 
-**Problem: Scrolling Repeated Text.** If you open epic treasure via docker and
-have an issue (likely with tmux) where the text is printing incorrectly to the
-terminal, try typing `exit` (and hitting enter, of course) to drop out of the
-tmux session. 
+**Problem: Scrolling Repeated Text.** The epic treasure docker image starts you
+in a tmux session. If you have an issue where the text is printing incorrectly
+to the terminal, try typing `exit` (and hitting enter, of course) to drop out
+of the tmux session. 
 
 **Problem: Windows and Docker.** Some students were able to get the docker
 image working in Powershell with the following modified command:

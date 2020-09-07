@@ -23,6 +23,9 @@ as:
 
 ### Video
 
+The video and these written notes cover much of the same material, but they are
+not identical in content. It is worth taking a look at both.  
+
 <iframe width="560" height="315"
 src="https://www.youtube.com/embed/QrQua0BLCmQ" frameborder="0"
 allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
