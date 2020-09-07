@@ -9,9 +9,14 @@ challenges: stack0 stack1 stack2 stack3 heap0 heap3
 
 In this lecture, we are going to dive right into exploiting binaries. We will
 begin with simple stack-based buffer overflows and work our way to the
-venerable stack-smashing example. We try to answer important questions such as:
+venerable stack-smashing example. We try to answer important questions, such
+as:
 
- - What is arbitrary code execution? 
+ - What does it mean to exploit a binary? 
+ - How are objects laid out in memory?
+ - How do we exploit basic buffer overflows to manipulate memory?
+ - What is a return address?
+ - What do compiled programs look like?
  - What are `setuid` binaries?  
  - What is privilege escalation? 
 
@@ -24,14 +29,14 @@ allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
 allowfullscreen></iframe>
 
 
-### Our First Challenge Binary
+### Finding the Bug in `stack0` 
 
-This is the source code for the `stack0` challenge binary. Your objective is to
-figure out how to exploit this binary. What do I mean by exploit? Well, loosely
-I mean that your job is to take control of how `stack0` executes to accomplish
-some goal. Here that goal is to read the contents of `flag.txt`; presumably
-because we don't have permission to read it directly. 
-
+The code box below shows the source code for the `stack0` challenge binary.
+Your objective is to figure out how to exploit this binary. What does it mean
+to "exploit" a binary? Well, loosely, your job is to take control of how
+`stack0` executes to accomplish some goal. Here that goal is to read the
+contents of `flag.txt`, presumably because we don't have permission to read it
+directly. 
 
 
 ```c
@@ -60,122 +65,148 @@ int main(int argc, char **argv)
 ```
  
 
-More generally, that goal involves gaining **arbitrary code execution** on the
-target  machine. This means I (the attacker) can execute whatever code I want.
-It should be straight-forward to see how arbitrary code execution can mean bad
-things for the owner of the machine. 
+More generally, the ultimate goal is gaining **arbitrary code execution** on a
+target  machine. Arbitrary code execution means I, the attacker, can execute
+whatever code I want.  It should be straight-forward to see how arbitrary code
+execution means bad things for the machine's owner. 
 
-How we (the attacker) obtain arbitrary code execution is one of the primary
-subjects of this course; however, in this example the goal is actually much
-simpler: we just want to modify the `modified` variable. 
+How to exploit binaries to obtain arbitrary code execution is one of the
+primary subjects of this course. However, for the `stack0` example, the goal is
+simpler: we want to change the value of the `modified` variable. 
 
 Broadly, our recipe for success calls for two ingredients. First, the program
 needs to contain a bug. Second, we need some way to supply input to the program
-to trigger that bug. Let's focus on supplying the input for now.
+to trigger that bug. Let's first focus on how to supply our malicious input.
 
-There are many different ways to supply input to a program. So how does this
-example program take input? For many challenge binaries, the most obvious way
-is to supply input via `stdin` (e.g., using `gets()`). But we can also provide
-command line arguments and  environment variables. In other programs, external
-input might come in the form of files on disk, network connections, external
-temperature sensors, etc. 
- 
-What about the bug? What is the bug in this program? Let's take a closer look
-at `gets`. Using `man gets` (on the target machine), we see that `gets()` reads
-a line from `stdin` into a buffer...until either a terminating newline or
-EOF...scrolling down to the BUGS section we see the following line of text:
 
-> Never use gets(). Because it is impossible to tell...how many characters
-> gets() will read. 
+**Ingredient: Supplying malicious input.** There are many different ways to
+supply input to a program. For many challenge binaries in this course, the most
+obvious way is to supply input via `stdin`. We can also provide input in the
+form of command line arguments and environment variables. In real-world
+programs, external input might come in the form of files on disk, network
+connections, external temperature sensors, etc. For `stack0`, `stdin` seems
+like a promising option due to the use of `gets`. 
 
-To really understand what this means we need to understand what memory looks
-like and how variables are stored in that memory. We know that an array is is
-just a sequence of contiguous bytes thrown somewhere in the giant abstract
-block that we call **memory**. More generally, we can define a **buffer** as
-any contiguous region of memory associated with a variable. So an integer might
-be associated with buffer of size 4 bytes.[^buffdef]  
+**Ingredient: The bug.** What is the bug in this program? Finding bugs
+often requires time and intuition---intuition which comes from experience. A
+good place to start is by looking for some of the more common mistakes that
+programmers make. As programmers often make mistakes when manipulating arrays,
+let us first take a look at how `buffer` is used in the program. 
+
+The first time `buffer` is used in the program is as an argument to the
+function `gets()`.  To understand how `gets()` works, we can start by reading
+the man page. It is a good idea to read the man page on a system that is
+similar to the target as different OSes may use slightly different versions of
+standard library functions.
+
+Using `man gets`, we see that `gets()` reads a line from `stdin`
+into a buffer until either a terminating newline or EOF. After scrolling down
+to the BUGS section we see the following line of text:
+
+```
+Never use gets(). Because it is impossible to tell...how many characters
+gets() will read. 
+```
+
+To really understand what this warning means we need to understand the memory
+layout of variables. An array is essentially just a sequence of contiguous
+bytes thrown somewhere in the giant abstract block of bytes that we call
+**memory**.  More generally, we can define a **buffer** as any contiguous
+region of memory associated with a variable. So an integer might be associated
+with buffer of size 4 bytes.[^buffdef]  
 
 [^buffdef]: Some texts will define buffer slightly differently than the definition we use here. 
 
-Now let's get back to `gets`. We know that `gets` in this example will copy
-from `stdin` into the `buffer` character array, aka the buffer named `buffer`.
-If we supply "aa" as input, then according to the man page, gets will store
-three bytes: 'a', 'a', '\0'. But what happens if we supply 'a' times 100? It
-will keep copying bytes and blow past the end of the array, i.e., write into
-adjacent memory. 
+Using the information from the man page, we can conclude that `gets` in the
+`stack0` example will copy input from `stdin` into the `buffer` character
+array, aka the buffer named `buffer`.  For example, if we run `stack0` and
+supply `aa` as input, then `gets()` will store three bytes into `buffer`: `a`,
+`a`, `\0`. But what happens if we supply an input that is larger than the size
+of `buffer`, e.g., a string of 100 `a` characters?  The answer is that `gets`
+will copy this entire string into memory (plus the null terminator). In other
+words, `gets()` will continue copying bytes even after it has blown past the
+end of `buffer`. Further, `stack0` does not include any code to check the that
+length of the supplied input is less than the size of buffer.  
 
-This type of bug is called a **buffer overflow**. Now, machines have a lot of
-memory, so what does it matter if a few bytes get overwritten?  Sometimes, it
-doesn't (seem to) matter! Your program may continue executing, at least for a
-little while, without any apparent issue.
+This type of bug is called a **buffer overflow**. Given that modern machines
+have a lot of memory, what does it matter if a few bytes get overwritten?
+Sometimes, it doesn't (seem to) matter! `stack0` will continue executing, at
+least for a little while, without any apparent issue. To understand the true
+problem with buffer overflows we have to consider what is *next to* `buffer` in
+memory. 
 
-To understand the true problem with buffer overflows we have to consider what
-is next to our buffer in memory. 
 
-Let's take a step back to fill in some details. Many of these details  will
-likely be familiar to you from other classes.
+### Introduction to Memory Layout
 
-*Virtual Address Space:* The operating system provides many wonderful
-abstractions to processes executing on the machine. One of the most important
-is related to memory. In particular, every process executing on a
-machine---remember that a process is just an executing program---is given its
-own virtual address space. From the perspective of the process, memory appears
-to be a contiguous array of bytes that the process can use however it wants.
-Each of those memory locations, can store a byte and is associated with an
-address. 
+Let's take a step back to fill in some details of how memory is used by
+processes. Many of these details will likely be familiar to you from other
+classes.
 
-This memory abstraction is great for the program because everything is simple,
-for example, the process does not need to know the actual physical address of
+The operating system provides many wonderful abstractions to processes
+executing on the machine. One of the most important is related to memory. In
+particular, every **process** executing on a machine---remember that a process
+is just an executing program---is given its own **virtual address space**. From
+the perspective of the process, memory appears to be a contiguous array of
+bytes that the process can use however it wants.  Each of those memory
+locations can store a byte and is associated with an address. 
+
+This memory abstraction is great for the program because everything is simple.
+For example, the process does not need to know the actual physical address of
 the memory it is using. Further, the process is isolated from all other
-processes; the memory for process A cannot be modified by process B. From now
-on, when I say "memory" I am typically referring to the abstracted version of
-memory provided by the OS, i.e., that contiguous stream of bytes.
+processes; the memory for process A cannot be modified by process B. When
+someone says "memory" in the context of an executing process, they are
+typically referring to the abstracted version of memory provided by the OS.
 
-By convention, memory (aka the virtual address space) is divided up into
-different sections to be used for different purposes. Broadly, a process's
-memory includes regions for the environment, the stack, the heap, data, and
-text.   
+By convention, the virtual address space is logically divided up into different
+sections to be used for different purposes. The layout usually includes regions
+for the stack, the heap, libraries, and program code.   The stack is a
+per-thread data structure that keeps track of local execution state. It
+includes local variables, return values, etc. The stack for the main thread
+even includes the command line arguments to the program and environment
+variables. The heap is used for dynamically allocated memory. For example,
+calls to `malloc()` allocate space on the heap. The compiled program code is
+also stored memory; this area is often called the `text` section. The code for
+libraries is also included in memory, but that code is stored in a different
+location than the `text` section. 
 
-The environment section includes the command line arguments, environment
-variables, and similar information. The stack is what makes function calling
-work (e.g., includes local variables, return values, etc.), the heap is used
-for dynamically allocated memory (e.g., when using `malloc()`), and the text
-section is primarily used for the compiled code. 
-
-If we visualize this, we might see:
+If we visualize this layout, we might see:
 
 ```
 0xff ff ff ff
 cmd env (set at process start)
 stack (grows down, bottom is fixed)
 heap (grows up)
-Text (code, read only)
+libraries (code, dynamically linked)
+text (code, read only)
 0x00 00 00 00
 ```
 
 Here I have represented memory with the 0x0 address at the bottom and highest
 address at the top. We can equivalently visualize memory in other orientations
 (up, down, and sideways). Different text will use different orientations and
-this will cause confusion.
-
-It is also common to represent memory addresses using hex notation. In this
-course, we will be working with both 32-bit and 64-bit binaries. The former
-uses a 32-bit virtual address
-space and each address can be represented in 4 bytes (or 8 hex digits) and the
-latter uses a 64-bit virtual address space which requires 8 bytes.
+this will cause confusion, but all of the representations are equivalent. It is
+also common to represent memory addresses using hex notation. In this course,
+we will be working with both 32-bit and 64-bit binaries. The former uses a
+32-bit virtual address space and each address can be represented in 4 bytes (or
+8 hex digits) and the latter uses a 64-bit virtual address space which requires
+8 bytes.
 
 Side note: There are lots of ways we can determine if a binary targets a 32 or
 64-bit architecture, but the easiest is probably the `file` command: `file
 bin_name`. 
 
-**Getting back to gets and our buffer overflow:** gets will happily copy whatever
-input we (aka the attacker) provide, even if that input is larger than the
-buffer. This means our attacker can overwrite adjacent memory. So what is
-adjacent to our buffer? In our challenge binary, the buffer is a local
-variable. We know that local variables are stored on the stack. So the attacker
-can overwrite information that is stored on the stack. Hmmm, the `modified`
-variable---you know that variable we want to modify to solve the challenge---is
-also on the stack. So let's see what happens. 
+
+### Exploiting the buffer overflow in `stack0`  
+
+As discussed above, `gets()` will happily copy whatever input we provide to
+`stack0`, even if that input is larger than the buffer, allowing us to
+overwrite memory adjacent to `buffer`. So what is adjacent to `buffer`? In this
+challenge binary, `buffer` is a local variable and local variables are stored
+on the stack. Consequently, the memory adjacent to `buffer` includes other
+information stored on the stack. Hmmm, the `modified` variable---you know that
+variable we want to modify to solve the challenge---is also a local variable so
+it must also be on the stack. Let's see what happens when we try overflowing
+`buffer`. 
 
 ```bash
 
@@ -183,12 +214,17 @@ python -c "print 'a'*100;" | ./stack0
 
 ```
 
-The above command will give us the response that we want: "you have changed the
-'modified' variable". There is a big caveat here. We implicitly
-assumed that the 'buffer' and 'modified' variables are adjacent to each other
-in memory. Not only that, we assumed that the 'modified' variable is at a
-higher address than 'buffer'. Our overflow wouldn't have given us the desired
-results if the compiler swapped them in memory.  
+The above command gives us the response that we want: "you have changed the
+'modified' variable", so we can conclude that `modified` was indeed adjacent in
+memory to `buffer` and thus overwritten by the large input.  However, there are
+some important caveats here. First, we assumed that the 'buffer' and 'modified'
+variables were adjacent to each other in memory because they are both local
+variables in the same function. Second, this input only worked because
+`modified` was stored at a higher address in memory than `buffer`. Neither of
+these conditions are intrinsic to the C language, instead they arose because of
+decisions made by the compiler.  For instance,  our overflow input would not
+have given us the desired results if the compiler swapped the order of buffer
+and modified in memory.  To summarize visually:
 
 Our assumption about the memory layout.
 ```
@@ -198,7 +234,7 @@ modified
 buffer
 ```
 
-What could have happened:
+What could have been the case:
 
 ```
 0xFF FF FF FF
@@ -213,66 +249,79 @@ Or even:
 0xFF FF FF FF
 ...
 modified
-???
+??? Other Stuff
 buffer
 ```
 
-The `volatile` keyword is included here as it forces the compiler not to
-optimize out the `modified` variable. This leads us to an important point:
-**the compiler is going to transform the c code and we don't know what the
-actual executed code will look like unless we examine the binary.** 
+Further, as there is no way to update the value of `modified` in any normal
+program control flow, the compiler might even remove the `modified` variable
+and instead use hard-coded zeroes where needed. The `volatile` keyword is used
+for `stack0` as it forces the compiler not to optimize out the `modified`
+variable. This leads us to an important point: **the compiler is going to
+transform the c code and we don't know what the actual executed code will look
+like unless we examine the binary.** 
 
-Another thing we will notice is that "segmentation fault" error. This means
-that our actions have caused the program to attempt to use memory in a way that
-isn't allowed. In this example, our input overwrote the modified variable and
-then just kept on overwriting other values in memory. One of those other values
-was the return address. 
 
-**Return Addresses.** To understand the concept of a return address, we need to
-remember that process memory is also used for code. As we just discussed, 
-the 'code' that is executed isn't the C code that we showed earlier. Instead,
-that code is a sequence of machine instructions. When a process is executing, the
-CPU will iterate through this sequence of instructions and perform the
-specified actions. We often visualize these machine instructions using assembly
-language (even though Assembly itself is still an abstraction).    
+### Return Addresses 
 
-The x86 architecture uses a special register, called the instruction pointer,
-to keep track of what instruction to execute next, i.e., it stores the memory
-address of the next instruction. Think about what happens when a function call
-occurs. The instruction pointer must change to point to the function in
-memory, but the current value of the instruction pointer must first be saved so
-that the CPU can return to where it was before (i.e., the calling function). We
-call this saved value, the return address. Given that the instruction pointer
-register can only store a single address, we have to find some other place to
-save the old pointer. The answer is to put it in memory, but where in memory?
-That's another job for the stack.
+Another thing we may see when exploiting the buffer overflow in `stack0` is a
+`segmentation fault` error. This means that our actions have caused the program
+to attempt to use memory in a way that isn't allowed. In this example, our
+input overwrote the `modified` variable and then just kept on overwriting other
+adjacent values in memory. One of those other values was the **return address**. In
+short, by overwriting the return address, we caused the process to attempt to
+execute code a location in memory that does not contain code. 
+
+To understand the concept of a return address, we need to first remember that
+process memory is also used for code. The code that is executed isn't the C
+source code that we showed earlier. Instead, that code is a sequence of machine
+instructions. When a process is executing, the CPU will iterate through this
+sequence of instructions and perform the specified actions. We often visualize
+these machine instructions using assembly language (even though Assembly itself
+is still an abstraction).    
+
+The x86 architecture uses a special register, called the **instruction
+pointer**, to keep track of what instruction to execute next, i.e., it stores
+the memory address of the next instruction to be executed. When a function call
+occurs, the instruction pointer must change to point to the first instruction
+of that function. As most functions eventually return to the caller, the
+current value of the instruction pointer must first be saved so that the CPU
+can return to where it was before (i.e., the calling function). We call this
+saved value, the return address.  Given that the instruction pointer register
+can only store a single address, we have to find some other place to save the
+old pointer. The answer is to put it in memory, but where in memory?  That's
+another job for the stack.
 
 With our new knowledge of return addresses, we can now understand what is
 causing the segmentation fault. We overflow the buffer, which overwrites
 `modified` and eventually overwrites the saved instruction pointer (i.e., the
-return address). So when we return from the function, by loading the old
-instruction pointer from the stack into our IP register, the address is now
-just a bunch of 'aaaa' bytes. The address 'aaaa' (probably) doesn't contain
-anything, in fact it probably hasn't even be allocated so the OS freaks out and
-kills the process. 
+return address). So when the process tries to return from the function, by
+loading the old instruction pointer from the stack into our IP register, the
+address is now just a bunch of 'aaaa' bytes. The address 'aaaa' (i.e.,
+0x61616161 in hexidecimal) probably does not contain any valid code so hardware
+notifies the OS of the problem and the latter kills the process. 
 
-Note: we can fix our exploit code by only overwriting the 'modified' variable. 
+Note, we can avoid the segmentation fault in `stack0` by adjusting our exploit
+code to only overwriting the 'modified' variable and leave the return address
+untouched. Of course, this requires us to know exactly where `buffer` and
+`modified` are relative to each other in memory. We will cover how to do this
+in future lectures.
 
 
 ### Looking at the disassembly
 
 We are going to use `gdb` to take a closer look at the instructions and memory
-that comprise our challenge binary.[^wrong] The first thing we are going to do is
-change how gdb displays assembly:
+that comprise `stack0`. Actually, this disassembly is for a simplified version
+of the code that is similar but does not read from `flag.txt`.
 
-[^wrong]: Actually, this disassembly is for a different version of the code that is similar but does not read from `flag.txt`.
-
+The first thing we are going to do is change how `gdb` displays assembly.
+We do this purely based on personal preference.
 
 ```
 set disassembly-flavor intel
 ```
 
-We do this purely based on personal preference. Now let's take a look at main:
+Now let's take a look at main:
 
 ```
 (gdb) disassemble *main
@@ -297,83 +346,83 @@ We do this purely based on personal preference. Now let's take a look at main:
 
 ```
 
-Hmmm, we better
-[review](http://www.cs.virginia.edu/~evans/cs216/guides/x86.html) some intel
-syntax.
- - esp is the register for the stack pointer (32-bit x86).
- - the format is `instruction dst, src`
- - e.g., `mov DWORD PTR [esp+0x5c], 0x0` means move the 32-bit representation
+It is a good idea to review [intel
+syntax](http://www.cs.virginia.edu/~evans/cs216/guides/x86.html), but here are
+a few reminders:
+ - the format is `instruction destination, source`
+ - esp is the stack pointer register in 32-bit x86, it points to the top
+   of the stack
+ - `mov DWORD PTR [esp+0x5c], 0x0` means move the 32-bit representation
    of 0x0 (DWORD) into the address `esp+0x5c`. 
  - `lea`: loads the effective address into the register rather than the content
    at that address.
 
 We can surmise that location of the modified variable is `esp + 0x5c` because
-of the initialization `mov` at 0x080483fd and `mov,test,je` sequences ending at
-0x08048417. Similarly, we guess that `esp + 0x1c` is the start of `buffer`
-because that address is passed to gets via the eax register getting pushed on
-the stack. The 32-bit x86 **calling convention** demands that arguments are
-passed to functions via the stack.
+of the initialization `mov` instruction at 0x080483fd and `mov,test,je`
+sequences ending at 0x08048417. Similarly, we guess that `esp + 0x1c` is the
+start of `buffer` because that address is passed to gets via the `eax` register
+getting pushed on the stack. The 32-bit x86 **calling convention** demands that
+arguments are passed to functions via the stack.
 
-We know know the relative positions of `modified` and `buffer` in memory. Some
-quick subtraction ( 0x5c - 0x1c ) tells us that the start of buffer and
-start of modified are only 64 bytes apart. Thus, we know they are directly
-adjacent. To avoid overwriting the old instruction pointer, we simply need to
-modify our malicious input such that it only overflows into `modified` and not
-any further:
+We can use these instructions to then calculate the relative positions of
+`modified` and `buffer` in stack memory. Some quick subtraction ( 0x5c - 0x1c )
+tells us that the start of buffer and start of modified are only 64 bytes
+apart. To avoid overwriting the old instruction pointer, which is pushed to the
+stack during the `call main` instruction (not shown),  we need to modify our
+malicious input such that it only overflows into `modified` and not any
+further:
 
 ```bash
-python -c "print 'a'*65;" | /opt/protostar/bin/stack0
+python -c "print 'a'*64;" | stack0
 ```
 
-Let's use gdb to visualize what is going on. 
+This input will overwrite `modified` as the python code `print 'a'*64` will
+produce a 65 character string consisting of 64 `a` characters and a `0x0a`
+newline character. Let's use `gdb` to see the impact on a running process.
 
 ```bash
-$ python -c "print 'a'*65" > 65.txt
-$ python -c "print 'a'*64" > 64.txt
+$ python -c "print 'a'*64" > input.txt
 
-$ gdb /opt/protostar/bin/stack0
-disass main
-break *0x08048411 // right after call to gets
-r < 64.txt
-x/s $esp+0x1c // to see our string
-x/68bx $esp+0x1c // to see the bytes in hex
+$ gdb stack0
+disass main // view the disassembly for the main function
+break *0x08048411 // put a breakpoint right after the call to gets()
+r < input.txt // run the binary with the long input
+x/s $esp+0x1c // to see the input string in stack memory
+x/68bx $esp+0x1c // to see input string bytes in hex
 //Warning, everything is flipped! higher addresses are lower
-//The 0x00000000 right after the 'AAAA' is modified
-c
-r < 65.txt
-x/68bx $esp+0x1c
-c
+//The 0x0a000000 right after the 'aaaa' is the memory for `modified`
 ```
+
+
 
 ### Setuid Binaries
 
-Why is it that we don't have permission to read "flag.txt" but when we
-exploit the binary we can read "flag.txt"? In other words, why does a binary
-(that we can run) have different permissions than we do?
+Why is it that we don't have permission to read "flag.txt" but when we exploit
+the binary we can read "flag.txt"? In other words, how can a binary that a user
+runs can have different permissions than the user? Let's take a look at the
+`stack0` binary using the `file` utility: `file ./stack0`. The output includes
+a curious bit of text calling stack0 a "setuid" ELF executable.  What does
+"setuid" mean here? To find out, we start the same way we always do on Linux:
+reading the MAN page. 
 
-First, let's take a look at the stack4 binary using the `file` utility: `file
-./stack4`. The output includes a curious bit of text calling stack4 a "setuid"
-ELF executable.  What does "setuid" mean here? To find out, we start the same
-way we always do on Linux: reading the MAN page. 
+The `setuid` man page gives us more information---specifically, about the C
+library function. We can see that **setuid** stands for set user identity. It
+allows a process to run as if it were started by a particular user and,
+consequently, run with that user's permissions.  So what is `setuid` good for?
+It is often used to allow an unprivileged user to access hardware features or
+to temporarily give a user elevated privileges, e.g., `ping` and `sudo` are
+both setuid binaries.
 
-The man page gives us more information (specifically, about the C library
-function, but they are related). We can see that setuid stands for set user
-identity. It allows a process to run as if it were started by a particular user
-and, consequently, run with that user's permissions.  Setuid binaries are
-useful for achieving **privilege escalation**. 
+For an attacker, though, if he can exploit a setuid binary that is running as
+root, then he effectively has root privileges.  Thus, setuid binaries are
+useful for achieving **privilege escalation**.  Fortunately, a malicious user
+with basic user permissions cannot simply write a program and use setuid to
+make that program run as root. The OS has mechanims in place to prevent that,
+as we can infer from looking at the errors section of the `setuid` man page. 
 
-If we run `id` we can see information about the current user, including their
-user id and group id. We can use `cat /etc/passwd` to see all of the users on
-the system. For example, we see that "root" has a userid of 0. 
 
-Fortunately, a malicious user cannot simply write a program and use setuid to
-make that program run as root. The OS has permissions in place to prevent that
-(as we can posit from looking at the errors section of the man page). So what
-is it good for? It is often used to allow an unprivileged user to access
-hardware features or to temporarily give a user elevated privileges, e.g.,
-`ping` and `sudo` are both setuid binaries.  For an attacker, though, if he can
-exploit a setuid binary that is running as root, then he effectively has root
-privileges. 
+
+ 
 
 
 
