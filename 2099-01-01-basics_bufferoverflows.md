@@ -16,7 +16,8 @@ as:
  - How are objects laid out in memory?
  - How do we exploit basic buffer overflows to manipulate memory?
  - What is a return address?
- - What do compiled programs look like?
+ - How do we use the disassembly to determine the layout of variables on the
+   stack?
  - What are `setuid` binaries?  
  - What is privilege escalation? 
 
