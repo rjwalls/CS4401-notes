@@ -30,7 +30,7 @@ unhelpful.
 
 Optional materials:
  - [Researchers Fooled a Google AI Into Thinking a Rifle Was a
-   Helicopter][gg_matsakis]. This article describes an attack very similar to
+   Helicopter][gg_matksakis]. This article describes an attack very similar to
 the street sign article, but performed on a black box system---one the
 attackers had no internal access to. As you read, think about how the writer
 describes the computer vision system: are they anthropomorphizing it? Is that
@@ -40,37 +40,6 @@ helpful or harmful?
 machine learning systems. An excellent primer on the steps already being taken
 to minimize harm in complex systems with potentially faulty algorithms. 
  
-
-
-
-
-
-Required material:
-
- - ["Adversarial Attacks and Defences: A Survey"][gg_chakraborty] This is a survey paper of recent
-developments in adversarial attacks on machine learning systems, and defense that have been developed
-against them. It has both technical details on how attacks and defenses are carried out (which you should
-read one or two to get a feel for and then skim) as well as overviews of which strategies are still
-considered effective and which ones have proven unhelpful.
- - ["Slight Street Sign Modifications Can Completely Fool Machine Learning Algorithms"][gg_ackerman]
-   A non-technical overview of a white box adversarial attack, showing how such an attack could
-be carried out in the real world. In this particular attack, researchers were able to make slight
-alterations to physical street signs that interfered with algorithmic identification, but were
-not obviously malicious to human observers.
- - ["This Neural Net Hallucinates Sheep"][gg_shane] This
-article describes a particular type of errors with a single ML based computer vision system, and 
-explores why machine learning is prone to this kind of mistake. In particular, it addresses one 
-reason why ML often works well and then suddenly makes mistakes that seem absurd to humans.
-
-Optional materials:
- - [Researchers Fooled a Google AI Into Thinking a Rifle Was a Helicopter][gg_matsakis] This article
-describes an attack very similar to the street sign article, but performed on a black box system- one
-the attackers had no internal access to. As you read, think about how the writer describes the 
-computer vision system: are they anthropomorphizing it? Is that helpful or harmful?
- - [Watson Medical Algorithm][gg_munroe] A visual representation of some of the decision making
-processes underlying current state of the art medical machine learning systems. An excellent primer
-on the steps already being taken to minimize harm in complex systems with potentially faulty algorithms. 
-  
 [gg_chakraborty]:https://arxiv.org/pdf/1810.00069.pdf
 [gg_ackerman]:https://spectrum.ieee.org/cars-that-think/transportation/sensors/slight-street-sign-modifications-can-fool-machine-learning-algorithms
 [gg_shane]:http://nautil.us/blog/this-neural-net-hallucinates-sheep
