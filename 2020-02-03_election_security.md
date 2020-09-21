@@ -13,7 +13,6 @@ Required material:
  - ["Securing the Vote: Protecting American Democracy"][gw_NAS] Read the
    summery and chapter 1, which cover background info on, current problems
 with, and recommendations for changes to the US election system (as of 2018).
-[gw_NAS]:https://media.carnegie.org/filer_public/34/9d/349d3207-d994-4838-8b79-5f8d88e0e412/nas_report.pdf
  - ["Voting Machine Security: Where We Stand Six Months Before the New
    Hampshire Primary"][gw_voting_machines_RLA] This article goes over the types
 of voting machines currently in use in the US and which states require
@@ -49,6 +48,7 @@ researchers into the startup behind the system.
  - ["Online voting vendor Voatz urges Supreme Court to limit security research"][gw_voatz_4]
 
 
+[gw_NAS]:https://media.carnegie.org/filer_public/34/9d/349d3207-d994-4838-8b79-5f8d88e0e412/nas_report.pdf
 [gw_politico_plague]:https://www.politico.com/news/2020/05/01/coronavirus-online-voting-229690
 [gw_estonia_problems]:https://verifiedvoting.org/wp-content/uploads/2020/07/Estonia_2014_IVotingReport.pdf
 [gw_voting_machines_RLA]:https://www.brennancenter.org/our-work/analysis-opinion/voting-machine-security-where-we-stand-six-months-new-hampshire-primary
