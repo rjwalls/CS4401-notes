@@ -1,6 +1,6 @@
 ---
 title:  "Discussion: Election Security"
-date:   2020-09-24 16:00:00
+date:   2020-01-01 16:00:00
 categories: notes lecture 
 layout: post
 ---
