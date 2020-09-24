@@ -10,6 +10,8 @@ Topic: "Discussion: Election Security," led by Galahad.
 Required material:
  - ["The Vulnerabilities of Our Voting Machines"][gw_SciAm] Scientific American
    interviews an election security expert.
+ - ["Why Electronic Voting Is Still A Bad Idea"][gw_youtube]
+ This video discusses the human trust factor of online voting.
  - ["Securing the Vote: Protecting American Democracy"][gw_NAS] Read the
    summery and chapter 1, which cover background info on, current problems
 with, and recommendations for changes to the US election system (as of 2018).
@@ -17,7 +19,7 @@ with, and recommendations for changes to the US election system (as of 2018).
    Hampshire Primary"][gw_voting_machines_RLA] This article goes over the types
 of voting machines currently in use in the US and which states require
 supporting audits, both normal and risk-limiting.
-  - ["Coronavirus boosts push for online voting despite security risks"][gw_politico_plague]
+ - ["Coronavirus boosts push for online voting despite security risks"][gw_politico_plague]
    This article covers arguments for and against implementing online voting in the face of the current pandemic.
  	
 
@@ -48,6 +50,7 @@ researchers into the startup behind the system.
  - ["Online voting vendor Voatz urges Supreme Court to limit security research"][gw_voatz_4]
 
 
+[gw_youtube]:https://youtu.be/LkH2r-sNjQs
 [gw_NAS]:https://media.carnegie.org/filer_public/34/9d/349d3207-d994-4838-8b79-5f8d88e0e412/nas_report.pdf
 [gw_politico_plague]:https://www.politico.com/news/2020/05/01/coronavirus-online-voting-229690
 [gw_estonia_problems]:https://verifiedvoting.org/wp-content/uploads/2020/07/Estonia_2014_IVotingReport.pdf
