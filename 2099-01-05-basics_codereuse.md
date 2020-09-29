@@ -6,8 +6,6 @@ layout: post
 challenges: heap1 heap2 heap3 stack4 stack5 stack6
 ---
 
-**Updated April 9, 2020 to include a different soluton for the vuln binary.**
-
 Up until now we've been focusing on a specific class of attacks: **code
 injection**. In these attacks, the attacker injects their own code into a
 vulnerable program and then hijacks the control flow of the program and
