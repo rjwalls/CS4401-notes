@@ -7,13 +7,6 @@ layout: post
 
 Topic: "Discussion: The Edward Snowden Leaks," lead by Matt Puentes
 
-
-[gg_katz]:https://www.thoughtco.com/katz-v-united-states-supreme-court-case-arguments-impact-4797888
-[gg_fourth]:https://www.gsllaw.com/content/images/GA-Bar-Journal-Computer-Article-Only.pdf
-[gg_smith_maryland]:https://caselaw.findlaw.com/us-supreme-court/442/735.html
-[gg_in_re]:https://www.courtlistener.com/opinion/624132/in-re-grand-jury-subpoena-duces-tecum/
-
-
 Required Material:
  - [Edward Snowden: Leaks that exposed US spy programme][optional2] Broad overview of the most important individual leaks from Snowden.
  - [Everything you need to know about PRISM][req1] A overview of PRISM, the NSA's data collection tool that pulls from prominent websites such as google and facebook.
