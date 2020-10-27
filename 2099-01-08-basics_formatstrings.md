@@ -74,19 +74,19 @@ code:
 
 ```c
 int value;
-printf("what's my age again? %n \n", &value);
+printf("what's my age again??? %n \n", &value);
 printf(value = %d\n", value)
 ```
 
 The output of this is: 
 
 ```c
-what's my age again?  
-value = 21
+what's my age again???  
+value = 23
 ```
 
-The value of 21 is exactly the number of characters preceding the `%n` in the 
-string `what's my age again? %n \n`.
+The value of 23 is exactly the number of characters preceding the `%n` in the 
+string `what's my age again??? %n \n`.
 
 In the previous example we provided the address of the `value` variable, but
 what if we left off this argument? Well, `printf` will interpret the word at
