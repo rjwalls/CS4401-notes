@@ -41,10 +41,6 @@ in the old pokemon games.
 "Cheat Sellers Are Ready to Ruin Call of Duty: Black Ops Cold War"). This
 article highlights the prevalence of cheating in video games and the thriving
 market for those cheats.
- - [\"Could Blockchain Put A STOP TO CHEATING In Video
-   Games?\"](https://www.youtube.com/watch?v=6xu1Yo3jEU8 "Could Blockchain Put
-A STOP TO CHEATING In Video Games?"). This video considers the age old question:
-\"Can we find a way to incorporate blockchain?\"
  - [\"DaCAP - Distributed Anti-Cheat for
    MMORPG\"](https://ieeexplore.ieee.org/document/4534267 "DaCAP - Distributed
 Anti-Cheat for MMORPG"). This paper proposes an anti-cheat system specific to
@@ -55,7 +51,7 @@ the mmorpg genre.
 cheating from the scholastic angle. Specifically, how cheating in video games
 and outside of video games may be connected. 
 
-# ## Discussion Questions
+### Discussion Questions
 
 Would you let a video game install kernel level anti-cheat on your pc?
  - Does how bad you want to play the game affect your answer?
@@ -88,6 +84,9 @@ benefit". Do you think implementing kernel level anti-cheat is worth the risk?
 Can you think of any ways to mitigate the need for anti-cheat in video games?
 What are some potential non-technical solutions to cheating?
 
-Consider the following scenario: You are developing the next big MMORPG. Given that you want to earn money from this game, you plan to implement anti-cheat measures to help ensure your game's success. Using the information in the required readings (+ any additional knowledge you might have) attempt to construct the hypothetical anti-cheat system for this game. 
-Where would you start?
-Are there any key features which must be included?
+Consider the following scenario: You are developing the next big MMORPG. Given
+that you want to earn money from this game, you plan to implement anti-cheat
+measures to help ensure your game's success. Using the information in the
+required readings (+ any additional knowledge you might have) attempt to
+construct the hypothetical anti-cheat system for this game.  Where would you
+start?  Are there any key features which must be included?
