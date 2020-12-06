@@ -10,26 +10,33 @@ led by John Parrick
 
 Required material:
 
-	- ["Maze suspected in German ransomware attack that caused woman's death"][jfp_maze]. This article 
-			discusses a recent ransomware attack that affected a hospital in Germany.
-	- ["Catching the virus cybercrime, disinformation and the COVID-19 pandemic"][jfp_euCovid]. This 
-			report discusses the rise of cyber crimes like DDOS and ransomware. It also discusses what 
-			they think the future of cyber crime will look like during the pandemic.
-	- ["Ransomware: Past, Present, and Future"][jfp_ransomwarePast]. This article discusses the history 
-			of ransomware, the ransomware situation as of 2017, and what it expects for the future. It 
-			also provides some defenses against ransomware.
-	- ["How to Help Spoil the Cybercrime Economy"][jfp_cyberEconomy]. This article discusses the cybercrime 
-			economy. It focuses on ransomware-as-a-service and DDOS-as-a-service.
-	- ["On the economic significance of ransomware campaigns: A Bitcoin transactions perspective"][jfp_bitcoin].
-			This paper discusses recent, as of 2018, ransomware attacks and analyzes the economic impact from 
-			a bitcoin perspective
+- ["Maze suspected in German ransomware attack that caused woman's
+  death"][jfp_maze]. This article discusses a recent ransomware attack that
+affected a hospital in Germany.i
+- ["Catching the virus cybercrime, disinformation and the COVID-19
+  pandemic"][jfp_euCovid]. This report discusses the rise of cyber crimes like
+DDOS and ransomware. It also discusses what they think the future of cyber
+crime will look like during the pandemic.
+- ["Ransomware: Past, Present, and Future"][jfp_ransomwarePast]. This article
+  discusses the history of ransomware, the ransomware situation as of 2017, and
+what it expects for the future. It also provides some defenses against
+ransomware.
+- ["How to Help Spoil the Cybercrime Economy"][jfp_cyberEconomy]. This article
+  discusses the cybercrime economy. It focuses on ransomware-as-a-service and
+DDOS-as-a-service.
+- ["On the economic significance of ransomware campaigns: A Bitcoin
+  transactions perspective"][jfp_bitcoin].  This paper discusses recent, as of
+2018, ransomware attacks and analyzes the economic impact from a bitcoin
+perspective
 
 Optional material:
 
-	- ["Fresno-area schools cancel online classes due to ransomware attacks, internet outages"][jfp_fresno]. 
-			This article mentions the effects of a recent ransomware attack on a school network
-	- ["COVID-19: Ruthless Ransomware Authors Attack Hospitals"][jfp_hospital]. This article discusses the 
-			recent rise of ransomware attacks against hospitals
+- ["Fresno-area schools cancel online classes due to ransomware attacks,
+  internet outages"][jfp_fresno].  This article mentions the effects of a
+recent ransomware attack on a school network
+- ["COVID-19: Ruthless Ransomware Authors Attack Hospitals"][jfp_hospital].
+  This article discusses the recent rise of ransomware attacks against
+hospitals
 
 
 [jfp_maze]:https://www.itwire.com/security/maze-suspected-in-german-ransomware-attack-that-caused-woman-s-death.html?mc_cid=3f16ae8bed&mc_eid=dc1a5bd20c
