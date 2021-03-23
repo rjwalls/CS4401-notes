@@ -6,7 +6,7 @@ layout: post
 ---  
   
 Topic: "Discussion: An Identity Crisis"  
-led by Joe Turcotte.  
+  
   
 Required material:  
   

@@ -5,7 +5,7 @@ categories: notes lecture
 layout: post
 ---
 
-Topic: "Discussion: Container Security" led Michael Ludwig.
+Topic: "Discussion: Container Security" 
 
 Required Material:
 

@@ -5,8 +5,7 @@ categories: notes lecture
 layout: post
 ---
 
-Topic: "Discussion: Tools and Techniques for Writing Secure Code," led
-by Roger.
+Topic: "Discussion: Tools and Techniques for Writing Secure Code" 
 
 Required material:
   - ["Security Bugs are Fundamentally Different Than Quality Bugs"][rw_securitybugs]. Provides an overview of software testing, quality assurance, and different kinds of software bugs.

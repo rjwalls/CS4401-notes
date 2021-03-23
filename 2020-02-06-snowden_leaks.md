@@ -5,7 +5,7 @@ categories: notes lecture
 layout: post
 ---
 
-Topic: "Discussion: The Edward Snowden Leaks," lead by Matt Puentes
+Topic: "Discussion: The Edward Snowden Leaks" 
 
 Required Material:
  - [Edward Snowden: Leaks that exposed US spy programme][optional2]. Broad overview of the most important individual leaks from Snowden.

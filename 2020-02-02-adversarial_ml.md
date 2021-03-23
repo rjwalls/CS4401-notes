@@ -5,8 +5,7 @@ categories: notes lecture
 layout: post
 ---
 
-Topic: "Discussion: adversarial attacks on machine learning systems," led by
-Galen.
+Topic: "Discussion: adversarial attacks on machine learning systems" 
 
 Required material:
  - ["Slight Street Sign Modifications Can Completely Fool Machine Learning

@@ -6,7 +6,7 @@ layout: post
 ---
 
 Topic: "Discussion: DDoS/Ransomware and the Economics Thereof"
-led by John Parrick
+
 
 Required material:
 

@@ -5,8 +5,7 @@ categories: notes lecture
 layout: post
 ---
 
-Topic: "Discussion: Investigation of ways personal data is tracked and its adverse affects on user privacy," led
-by Jared.
+Topic: "Discussion: Investigation of ways personal data is tracked and its adverse affects on user privacy" 
 
 Required material:
  - ["How do websites track users?"][jg_tracking] While this is a company trying to sell a privacy protection tool, they do a great job providing a summary of how consumers can be tracked online. 

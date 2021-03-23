@@ -6,8 +6,7 @@ layout: post
 ---
 
 Topic: "Discussion: problems that arise in applying constitutional law to
-modern technology in order to protect the privacy rights of individuals," led
-by Guin.
+modern technology in order to protect the privacy rights of individuals," 
 
 Required material:
  - ["Katz v. United States: Supreme Court Case, Arguments, Impact."][gg_katz]

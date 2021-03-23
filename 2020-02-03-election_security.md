@@ -5,7 +5,7 @@ categories: notes lecture
 layout: post
 ---
 
-Topic: "Discussion: Election Security," led by Galahad.
+Topic: "Discussion: Election Security" 
 
 Required material:
  - ["The Vulnerabilities of Our Voting Machines"][gw_SciAm] Scientific American

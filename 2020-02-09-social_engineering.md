@@ -5,7 +5,7 @@ categories: notes lecture
 layout: post
 ---
 
-Topic: "Discussion: Social Engineering" led by Jean-Philippe Pierre
+Topic: "Discussion: Social Engineering" 
 
 Required material:
 

@@ -6,7 +6,7 @@ layout: post
 ---
 
 Topic: "Discussion: Online Censorship and How Governments Police the Internet"
-led by Joe Petitti.
+
 
 Required material:
 
