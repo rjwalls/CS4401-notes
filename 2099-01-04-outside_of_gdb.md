@@ -1,6 +1,6 @@
 ---
 title:  "Quick Notes: Help: My Exploit Works in GDB but not on the Server" 
-date:   2020-04-01 01:01:00
+date:   2020-01-04 04:01:00
 categories: notes quick
 layout: post
 ---

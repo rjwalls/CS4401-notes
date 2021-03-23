@@ -1,6 +1,6 @@
 ---
 title: "Lecture Notes: Setting up your Local Environment for Challenge Solving"
-date: 2020-03-26 01:01:00
+date: 2020-01-02 01:01:00
 categories: notes lecture 
 layout: post
 ---

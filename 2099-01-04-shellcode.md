@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: The Basics of Shellcoding"
-date:   2020-04-01 09:00:00
+date:   2020-01-04 03:00:00
 categories: notes lecture
 layout: post
 challenges: stack4 stack5 stack6

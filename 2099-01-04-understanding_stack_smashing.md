@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Understanding Smashing the Stack for Fun and Profit"
-date:   2020-04-01 01:00:00
+date:   2020-01-04 02:00:00
 categories: notes lecture
 layout: post
 ---

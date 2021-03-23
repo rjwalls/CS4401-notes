@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Using Corefiles to Build Exploits"
-date:   2020-04-05 01:01:00
+date:   2020-01-05 01:01:00
 categories: notes lecture 
 layout: post
 ---

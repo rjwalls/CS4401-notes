@@ -1,6 +1,6 @@
 ---
 title: "Lecture Notes: The Stack and Local Variables"
-date: 2020-03-30 01:01:00
+date: 2020-01-03 01:01:00
 categories: notes lecture 
 layout: post
 ---

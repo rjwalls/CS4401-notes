@@ -1,6 +1,6 @@
 ---
 title:  "Lecture Notes: Basics of Stack Canaries"
-date:   2020-04-09 01:01:01
+date:   2020-01-06 01:01:01
 categories: notes lecture
 layout: post
 challenges: not-so-random ssp-buffer

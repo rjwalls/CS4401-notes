@@ -1,6 +1,6 @@
 ---
 title:  "Quick Notes: Intel vs. At&t Syntax"
-date:   2020-03-26 01:01:00
+date:   2020-01-02 04:01:00
 categories: notes quick
 layout: post
 ---

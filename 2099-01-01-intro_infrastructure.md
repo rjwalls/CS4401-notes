@@ -1,6 +1,6 @@
 ---
 title: "Lecture Notes: Introducing the Course Infrastructure"
-date: 2020-03-25 01:01:00
+date: 2020-01-01 10:00:00
 categories: notes lecture 
 layout: post
 ---
