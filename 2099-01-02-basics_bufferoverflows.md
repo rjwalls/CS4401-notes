@@ -463,3 +463,86 @@ merely write a program and use setuid to make that program run as root. The OS
 has mechanisms and policies in place to prevent that, as we can infer from
 looking at the errors section of the `setuid` man page. 
 
+
+### PIE Binaries
+
+
+Some binaries are compiled to be position-independent, meaning that the code
+section can be positioned at an arbitrary memory location when the process is
+loaded.  We refer to such binaries as position independent executables or PIE
+binaries.  
+
+PIE can complicate the generation of exploits because we, as the attacker,
+often need to know the location of particular functions (or code sequence) in
+memory. PIE makes such addresses a little harder to determine. PIE is also an
+essential enabler of defenses like ASLR---we will save the discussion of ASLR
+for a future lecture. 
+
+It is possible to check if a binary is compiled with PIE-support using the
+`checksec` utility, which comes preinstalled with the EpicTreasure docker
+image.  
+
+```
+$ checksec ./stack2-64
+[*] '/root/host-share/stack2-64'
+    Arch:     amd64-64-little
+    RELRO:    Full RELRO
+    Stack:    No canary found
+    NX:       NX enabled
+    PIE:      PIE enabled
+```
+
+Another clue that PIE is enabled is if the function addresses are at low
+addresses. For example, the following shows the `win()` function at address
+`0x7aa`, which far from where the function will be placed at runtime.  
+
+```
+$ gdb ./stack2-64
++pwndbg> p win
+$1 = {void ()} 0x7aa <win>
+```
+
+Fortunately, we can use GDB to determine where a function is loaded at runtime
+without much trouble by using GDB and breakpoints, as shown in the following
+example.
+
+```
+$ gdb ./stack2-64
++pwndbg> b main
+Breakpoint 1 at 0x824: file stack2.c, line 24.
++pwndbg> r
+
+...Omitted for clarity...  
+
++pwndbg> p win
+$2 = {void ()} 0x5555555547aa <w
+
+```
+
+An astute reader might notice that the last three nibbles of the actual
+address, `0x7aa`, are the same as what we saw in our first attempt to find the
+address of `win()`. That is not a coincidence. Instead, the `0x7aa` is an
+offset from the start of the text section.  We can find out where the text
+section starts (and the location and size of other regions) using `info proc
+map` in GDB. 
+
+```
+$ gdb ./stack2-64
++pwndbg> b main
+Breakpoint 1 at 0x824: file stack2.c, line 24.
++pwndbg> r
+
+...Omitted for clarity...  
+
++pwndbg> info proc map
+process 2155
+Mapped address spaces:
+
+          Start Addr           End Addr       Size     Offset objfile
+      0x555555554000     0x555555555000     0x1000        0x0 /root/host-share/stack2-64
+...Omitted for clarity...  
+      0x7ffffffde000     0x7ffffffff000    0x21000        0x0 [stack]
+...Omitted for clarity...  
+
+```
+
