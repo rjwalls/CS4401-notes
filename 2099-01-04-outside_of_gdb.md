@@ -6,19 +6,21 @@ layout: post
 ---
 
 Stack addresses are going to be different in different execution environments.
-You might find that your exploit string works in GDB, but segfaults outside of
+You might find that your exploit string works in GDB but segfaults outside of
 GDB. Or maybe you got it working on your local machine but not on the server?
-This is because the stack addresses are different (sometimes just a little bit
-different) when you run in different environments. 
+This situation often arises because the stack addresses for the same program
+will vary for different environments.
 
-To understand why, remember that I said that environment variables are loaded
-onto the stack when you launch a process. If different environments have
-different values for those variables then the amount of stack space used to
-store the environment variables will be different. Consequently, the stack
-addresses further down in the stack will also differ. 
+There are several reasons why the stack address may differ. For example,
+environment variables are loaded onto the stack when you launch a process. If
+different environments have different values for those variables, then the
+amount of stack space used to store the environment variables will differ.
+Consequently, objects further down in the stack will also differ in their
+addresses.
 
-But many other factors can influence the state of the stack. Consider the
-following test code:
+Other factors can influence the state of the stack. Consider the following test
+code:
+
 
 ```c
 #include <stdlib.h>
@@ -34,8 +36,8 @@ int main(int argc, char **argv)
 }
 ```
 
-When compiled with `gcc test_stack.c -no-pie -o test_stack` and run in our
-test environment with ASLR disabled, we see the following output:
+When compiled with `gcc test_stack.c -no-pie -o test_stack` and run in a test
+environment with ASLR disabled, we see the following output:
 
 ```
 $ ./test_stack
@@ -52,19 +54,20 @@ $ ENVVAR=Blahddddddddddddddddddddddd ./test_stack
 Stack is at 0x7fffffffe2a4
 ```
 
-Notice how the address of `i` on the stack changes when we:
- - run with relative vs. absolute paths, or
- - add command line arguments, or 
- - add environment variables.
+Notice how the address of `i` on the stack changes when we run with relative
+vs. absolute paths, or add command line arguments, or add environment
+variables.
 
 So what's the solution? It depends on the situation. If you are trying to get
 the venerable stack-smashing-plus-shellcode attack to work, then you'll want to
 employ a NOP sled---more details on NOP sleds in the classic paper "Smashing
 the Stack for Fun and Profit". If you have a memory leak, then you can
 (probably) directly figure out the location of the stack based on the contents
-of the leaked memory. 
+of the leaked memory. **If you have access to the core dump, then you can often
+directly determine the stack layout---we discuss core dumps in another set of
+notes.** 
 
-**Manipulating the environment variables.** It might also help to manipulate
+**Manipulating the environment variables.** In limited scenarios, it might also help to manipulate
 the environment variables on the machine to make stack addresses more
 predictable. You can:
  - view  environment variables with `printenv`, 
