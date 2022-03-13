@@ -1,11 +1,14 @@
 ---
 title:  "Discussion: Data Tracking and Privacy"
-date:   2020-02-01 01:01:00
+date:   2099-02-01 01:01:00
 categories: notes lecture 
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: Investigation of ways personal data is tracked and its adverse affects on user privacy" 
+
+<!--more-->
 
 Required material:
  - ["How do websites track users?"][jg_tracking] While this is a company trying to sell a privacy protection tool, they do a great job providing a summary of how consumers can be tracked online. 

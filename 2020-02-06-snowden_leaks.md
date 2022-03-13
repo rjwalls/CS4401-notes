@@ -1,11 +1,14 @@
 ---
 title:  "Discussion: The Edward Snowden Leaks"
-date:   2020-02-01 01:01:00
+date:   2099-02-01 01:01:00
 categories: notes lecture 
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: The Edward Snowden Leaks" 
+
+<!--more-->
 
 Required Material:
  - [Edward Snowden: Leaks that exposed US spy programme][optional2]. Broad overview of the most important individual leaks from Snowden.

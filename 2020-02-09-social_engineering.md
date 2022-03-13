@@ -1,11 +1,14 @@
 ---
 title:  "Discussion: Social Engineering"
-date:   2020-02-01 01:01:00
+date:   2099-02-01 01:01:00
 categories: notes lecture 
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: Social Engineering" 
+
+<!--more-->
 
 Required material:
 

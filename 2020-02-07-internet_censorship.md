@@ -1,12 +1,14 @@
 ---
 title:  "Discussion: Internet Censorship"
-date:   2020-02-01 01:01:00
+date:   2099-02-01 01:01:00
 categories: notes lecture 
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: Online Censorship and How Governments Police the Internet"
 
+<!--more-->
 
 Required material:
 

@@ -1,11 +1,14 @@
 ---
 title:  "Discussion: Tools and Techniques for Writing Secure Code"
-date:   2020-02-01 01:01:00
+date:   2099-02-01 01:01:00
 categories: notes lecture
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: Tools and Techniques for Writing Secure Code" 
+
+<!--more-->
 
 Required material:
   - ["Security Bugs are Fundamentally Different Than Quality Bugs"][rw_securitybugs]. Provides an overview of software testing, quality assurance, and different kinds of software bugs.

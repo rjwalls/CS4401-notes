@@ -1,12 +1,14 @@
 ---
 title: 	"Discussion: DDoS/Ransomware and the economics thereof"
-date:	2020-02-01 16:00:00
+date:	2099-02-01 16:00:00
 categories: notes lecture
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: DDoS/Ransomware and the Economics Thereof"
 
+<!--more-->
 
 Required material:
 

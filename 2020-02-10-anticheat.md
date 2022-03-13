@@ -1,11 +1,14 @@
 ---
 title:  "Discussion: Anti-Cheat Measures in Games"
-date:   2020-02-01 01:01:00
+date:   2099-02-01 01:01:00
 categories: notes lecture 
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: Anti-Cheat Measures in Games" led by Jean-Luc Pierre-Louis.
+
+<!--more-->
 
 Required material:
  - [\"Game Security\"](https://research.nccgroup.com/2020/05/29/game-security/

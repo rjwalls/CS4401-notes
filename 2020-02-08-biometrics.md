@@ -1,12 +1,14 @@
 ---  
 title:  "Discussion: Biometrics"  
-date:   2020-02-01 01:01:00  
+date:   2099-02-01 01:01:00  
 categories: notes lecture   
 layout: post  
+excerpt_separator: <!--more-->
 ---  
   
 Topic: "Discussion: An Identity Crisis"  
   
+<!--more-->
   
 Required material:  
   

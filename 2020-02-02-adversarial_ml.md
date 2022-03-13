@@ -1,13 +1,17 @@
 ---
 title:  "Discussion: Adversarial Attacks on Machine Learning Systems"
-date:   2020-02-01 01:01:00
+date:   2099-02-01 01:01:00
 categories: notes lecture 
 layout: post
+excerpt_separator: <!--more-->
 ---
 
 Topic: "Discussion: adversarial attacks on machine learning systems" 
 
+<!--more-->
+
 Required material:
+
  - ["Slight Street Sign Modifications Can Completely Fool Machine Learning
    Algorithms"][gg_ackerman]. A non-technical overview of a white box
 adversarial attack, showing how such an attack could be carried out in the real
@@ -28,6 +32,7 @@ which strategies are still considered effective and which ones have proven
 unhelpful.
 
 Optional materials:
+
  - [Researchers Fooled a Google AI Into Thinking a Rifle Was a
    Helicopter][gg_matksakis]. This article describes an attack very similar to
 the street sign article, but performed on a black box system---one the
