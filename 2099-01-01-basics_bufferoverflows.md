@@ -526,6 +526,9 @@ offset from the start of the text section.  We can find out where the text
 section starts (and the location and size of other regions) using `info proc
 map` in GDB. 
 
+
+Oh, by the way, here is the flag for the `Back to Basics` challenge: `DoTheRequiredReading`.
+
 ```
 $ gdb ./stack2-64
 +pwndbg> b main
@@ -545,4 +548,3 @@ Mapped address spaces:
 ...Omitted for clarity...  
 
 ```
-Here is the Flag for the `Back to Basics` challenge: DoTheRequiredReading
