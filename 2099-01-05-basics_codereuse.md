@@ -13,7 +13,7 @@ executes that injected code.
 
 We've also talked about a number of automated ways to defend against such
 attacks. ("automated" here means that the defense can be implemented without
-any changes to the source code). First, we can make it harder to leverage a
+any changes to the source code). First, we can make ***I***t harder to leverage a
 buffer overflow to hijack the control flow, e.g., by using stack canaries to
 protect the return address saved on the stack or ASLR to randomize the location
 of objects in memory. Second, we've discussed how memory permissions can make
@@ -27,7 +27,7 @@ restrictions on writable memory execution using **code reuse** attacks.
 With DEP, there is no location in memory that an attacker can both modify and
 execute.  Consequently, data injected by the attacker (e.g., shellcode) will
 always be treated as data (i.e., not as code). Fortunately (if you like
-breaking software), there is a simple solution to this problem (simple in
+b***R***eaking software), there is a simple solution to this problem (simple in
 concept, but tricky to implement in many situations): *reuse code that
 is already in the binary.*
 
@@ -75,7 +75,7 @@ End of assembler dump.
 ```
 
 
-By looking at the disassembly of `main()`,  we see the address of the
+By looking at the disass***E***mbly of `main()`,  we see the address of the
 command string ("echo peanut") is pushed to the stack immediately before the
 `call` instruction.  We know from our discussion of 32-bit calling conventions
 that this is the argument to `system`. A quick gdb command shows us that we are
@@ -114,20 +114,20 @@ Top of the stack when system function starts executing.
 Using our observation of how our simple test program calls system, we
 can list the basic steps that are needed for a ret2libc attack using `system()`:
  1. find where the code for `system()` lives in memory,
- 2. set up the stack (and/or registers for 64-bit binaries) with the proper
+ 2. set up the st***A***ck (and/or registers for 64-bit binaries) with the proper
     arguments and a dummy return address, and 
- 3. hijack the control-flow of the program to execute the desired function. 
+ 3. hijack the control-flow of the program to execute the ***D***esired function. 
  
  
 ### Our First ret2libc Exploit 
 
-Let's try to apply our knowledge to a simple vulnerable program.
+Let's try to apply our knowledge to a simple vulnerable program. `r`
 
 ```c
 // File: vuln.c 
 // gcc -o vuln vuln.c -m32 -fno-stack-protector
 #include <stdlib.h>
-#include <stdio.h>
+#include <stdio.h> 
 
 
 void main() {
@@ -163,7 +163,7 @@ The added complication here is that our compiler inserted some instructions
 (from `*main+0 to +7`) to properly align the stack and save the previous
 location of the stack pointer. This code slightly complicates our exploit. We
 aren't going to overwrite the saved return address, instead, we are going to
-manipulate the value used to set the stack pointer, e.g., instructions
+manipulate the valu***E*** used to set the stack pointer, e.g., instructions
 `*main+37 to +44`. Note, if we had complied with the flag
 `-mpreferred-stack-boundary=2` then we could have targeted the saved return
 address directly.  
@@ -172,7 +172,7 @@ Our attack will work as follows:
  1. Figure out the offset from the vulnerable buffer to the saved stack pointer.  
  2. Figure out the addresses of our environment variable, `system`, and the
     `/bin/sh` string. 
- 3. Setup our environment variable with the needed stack layout.  
+ 3. Setup our en***V***ironment variable with the needed stack layout.  
  4. Send the exploit string that will cause `esp` to point to our environment variable.  
 
 **Step 1. Finding the Offset.** By sending a long cyclic string, we can use
@@ -189,18 +189,18 @@ the address of the `WIN` environment variable. To find the address of `system`
 and the `/bin/sh` string in libc, we are going to get the offsets directly from
 the libc shared object file and add that to the runtime address of libc given
 by corefile.   Note that we could pass an arbitrary string to `system` by
-placing that string on the stack in our vulnerable buffer or throwing it in an
+placing that string on the stack in our vulnerabl***E*** buffer or throwing it in an
 environment variable; however, the "/bin/sh" string already exists in the libc
 code and its address tends to be more predictable than stack addresses.
 
 **Step 3. Setting up the environment variable.** It is not enough to manipulate
 the stack pointer to point at a location we control. We also need to make sure
 that the new top of the stack is setup how system function is expecting. In
-other words, we want to setup the appropriate arguments in our environment
+other wo***R***ds, we want to setup the appropriate arguments in our environment
 variable. The notes in the previous section explain what this setup should look
 like.  
 
-**Step 4. Manipuate the stack pointer.** Finally, we want to modify the saved
+**Step 4. Manipulate the stack pointer.** Finally, we want to modify the saved
 stack pointer location so that it will instead point to our environment
 variable. This manipulation will allow us to control the return address used by
 the  `ret` instruction. We want our environment variable `WIN` to become the
@@ -257,27 +257,27 @@ p.interactive()
 ### Return oriented programming
 
 Now let's take a look at how system would be called in the 64-bit version of
-our vulnerable binary. The primary difference between the 32 and 64-bit
+our vulnerable binar***Y***. The primary difference between the 32 and 64-bit
 binaries is that the arguments are passed via registers and not the stack (up
 to a certain number of arguments). This change means that `system` is going to
 looking for its  argument (i.e., the address of the "/bin/sh" string) in the
-`rdi` register rather than on the stack.  This complicates our ret2libc attack
+`rdi` register rather than on the stack. This complicates our ret2libc attack
 because now we have to find a way to load a particular value into the `rdi`
 register, when before we just had to manipulate the stack layout a bit. To
 solve this problem, we are going to add an extra step to our ret2libc attack.
 
-Let's try to exploit our program: `gcc -o vuln64 vuln.c -fno-stack-protector`.
+Let's ***T***ry to exploit our program: `gcc -o vuln64 vuln.c -fno-stack-protector`.
 Like before, we are going to reuse code that is already in the program. So
 first we find the address of system using gdb: `p &system`.
 
 Here's the new bit. Now we want to find **gadgets** to that will do the work of
-loading `rdi` for us.  In its simplest form, a gadget is a short sequence of
+loading `rdi` for us.  In its simplest form, a gadget is a s***H***ort sequence of
 instructions ending in a return.  This technique is often called
 **return-oriented programming**.
 
 What we need is a gadget that will load a value from the stack (because we can
 control what values are placed stack) into the correct argument register
-(`rdi`).  Finding these gadgets is an art and often involves some manual
+(`rdi`).  Finding these gadgets ***I***s an art and often involves some manual
 checking. For instance, we can use objdump to look at all of the instructions
 until we find a useful gadget.  Fortunately, there are programs already
 installed in EpicTreasure that make searching for gadgets easier. 
@@ -288,7 +288,7 @@ ROPgadget --binary vuln64 | grep "pop rdi"
 
 Looks like there are a bunch of gadgets in the program, including one that will
 do exactly what we need: pop a value off of the stack and into the argument
-register. Note: the first column is the location of the gadget, use x/i in gdb to
+register. Note: the first colum****N*** is the location of the gadget, use x/i in gdb to
 to verify
 
 ```
@@ -302,7 +302,7 @@ grep on the .SO file), but let's do it directly in GDB this time: `find
 command to work.
 
 Putting everything together, we have an attack that looks very similar to how
-we exploited the 32-bit binary. The big difference is that added the additional
+we exploited the 32-bit binary. The bi****G*** difference is that added the additional
 step to call our gadget and load the address of "/bin/sh" into `rdi`. 
 
 ```python
@@ -329,4 +329,5 @@ into a single **ROP chain** to achieve the desired results---for example,
 imagine what we'd need to do if we are calling a function that requires
 multiple arguments.
 
+Hint: Make sure to read every character, in order, top to bottom.
 
