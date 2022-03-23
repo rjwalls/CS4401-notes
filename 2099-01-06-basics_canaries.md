@@ -157,3 +157,8 @@ the stack. These copies are created because each function places it's own copy o
 the canary on the stack. They are used to check if the original value of the
 canary is maintained in order to detect whether the return address for a 
 specific function call has been modified. 
+
+![This cat also enjoys canaries.](https://raw.githubusercontent.com/rjwalls/CS4401-notes/master/assets/blindhide.png)
+
+
+

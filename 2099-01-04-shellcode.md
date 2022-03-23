@@ -53,7 +53,7 @@ We have to understand the **calling convention** for system calls when writing
 shell code.  On 32-bit x86 linux, this convention requires the arguments to be
 placed in registers followed by the use of the `int 0x80` trap instruction.
 For information on syscall arguments, check out the following
-[x86](https://syscalls.kernelgrok.com/) and
+[x86](http://faculty.nps.edu/cseagle/assembly/sys_call.html) and
 [x86-64](https://filippo.io/linux-syscall-table/) reference guides.
  
 **Note:** when a programmer uses `execve` in a C program, they are actually
@@ -136,7 +136,7 @@ take care of that with this instruction.
  - `movb $0xb,%al`: By convention, register `eax` holds the index in the
    syscall table of the desired syscall. This let's the hardware/OS know which
 syscall to execute. Why do we use a `movb` instruction here instead of `movl
-$0xb, %rax`? Answer: the latter instruction includes a 0x0 byte. 
+$0xb, %eax`? Answer: the latter instruction includes a 0x0 byte. 
  - `movl %esi,%ebx`: Register `ebx` holds the first argument to the syscall,
    i.e., the address of the "/bin/sh" string.
  - `leal 0x8(%esi),%ecx`: `ecx` holds the second The second argument, i.e., the
