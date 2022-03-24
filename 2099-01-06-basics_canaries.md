@@ -114,7 +114,8 @@ memory. The original canary value is held in a TLS and is referenced by segmenta
 via `fs`. Although since the `fs` register uses segmentation based addressing and not 
 virtual memory addressing, it is difficult to locate it's actual location in memory.
 
-```+pwndbg> x/10i $pc
+```
++pwndbg> x/10i $pc
 => 0x555555554857 <vuln+93>:    xor    rax,QWORD PTR fs:0x28
    0x555555554860 <vuln+102>:   je     0x555555554867 <vuln+109>
    0x555555554862 <vuln+104>:   call   0x5555555546a0 <__stack_chk_fail@plt>
@@ -141,7 +142,7 @@ x/10gx 0x7ffff7fe9728
 0x7ffff7fe9768: 0x0000000000000000      0x0000000000000000
 ```
 Here we observe that the canary value is indeed referenced by `fs:0x28`
-and placed in $rax.
+and placed in `$rax`.
 
 *Note canary values usually end in `00` which can make it harder to pass a canary 
 value during an exploit because scanf for example, reads `\x00` as a null byte 
