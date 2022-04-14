@@ -3,7 +3,6 @@ title: "Lecture Notes: Basics of Format String Vulnerabilities"
 date: 2020-01-08 01:00:00
 categories: notes lecture 
 layout: post
-author: Juan Luis Herrero Estrada
 challenges: format0 format1 format2 format3 format4
 ---
 
