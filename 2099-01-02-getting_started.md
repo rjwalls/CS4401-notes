@@ -5,7 +5,11 @@ categories: notes lecture
 layout: post
 ---
 
-This set of notes gives a 
+This set of notes lists what you should do to prepare for the first lecture. It
+also introduces the course infrastructure and describes the recommended setup
+for solving challenge binaries. In particular, it describes how to set up a
+local container for running binaries, how to connect to the course shell server
+and access challenge binaries, and how to submit flags.
 
 
 ### Preparing for the Course
