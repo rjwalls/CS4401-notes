@@ -17,15 +17,16 @@ and access challenge binaries, and how to submit flags.
 To prepare for the course, you should do the following before the first class (time permitting):
 
  1. Read the welcome email. The instructor should send this email a day or two before the first class. 
- 2. Watch the Tips and Tricks videos. This playlist contains videos of previous students and covers what they think you should know before taking this course.
- 3. Read the course syllabus. 
- 4. Create an account on the course infrastructure. Note that you may use an alias---see details below.
+ 2. Watch the [Tips and Tricks videos](https://youtube.com/playlist?list=PLeKxIn6N-kCi38WxOqNBXhxrZnOE9SVET). This playlist contains videos of previous students and covers what they think you should know before taking this course.
+ 3. Read the [course syllabus](https://cs4401.walls.ninja/syllabus). 
+ 4. Create an account on the [course infrastructure](https://cs4401.walls.ninja/). Note that you may use an alias as your username---see details below.
  5. Join the course Discord Server using the link in the welcome email. In the future, I will use Discord rather than email for course communications. Unlike the course website, you should set your Discord nickname for the server as your real name.
- 6. If time allows, set up your local environment for challenge solving as described below.
+ 6. Look at the [schedule](https://cs4401.walls.ninja/schedule) for the first couple of lectures. 
+ 7. If time allows, read the notes below to set up your local environment for challenge solving.
 
 ### Course Docker Container
 
-I recommend solving course challenges inside of an [Epic
+I recommend solving most course challenges inside of an [Epic
 Treasure](https://github.com/rjwalls/EpicTreasure) docker container. This
 container comes with a variety of valuable tools preinstalled.  To use this
 container, you'll first need to install docker. Afterward, you can run the
