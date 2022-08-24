@@ -41,6 +41,14 @@ For some Windows users, tmux has an issue with text printing incorrectly, e.g.,
 scrolling repeated text. If you have such problems or prefer not to use tmux,
 you can omit `tmux` from the previous command. 
 
+**To disable ASLR in the docker container run the following after launching the
+container.** Note: you'll need to run this command everytime you launch a new
+Epic treasure container.
+
+```bash
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+```
+
 ### Video: Introducing the Course Infrastructure
 
 The video below gives a quick introduction on the course infrastructure,
