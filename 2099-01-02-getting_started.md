@@ -74,4 +74,19 @@ challenge binaries, and how to submit flags.
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/hDTuJGkkG2c" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+### Setting Up pwntools and gef on the Course Server
 
+The bulk of your challenge solving should be done in your local container.
+However, it is often useful to be able to run pwntools and gef on the course
+server as well. To set up those tools, running the following on the course
+server(s):
+
+```bash
+# Install pwntools
+python3 -m pip install --upgrade pip && python3 -m pip install --upgrade pwntools
+
+# Install gef
+wget -O ~/.gdbinit-gef.py -q https://gef.blah.cat/py && \
+    echo source ~/.gdbinit-gef.py > ~/.gdbinit && \
+    python3 -m pip install ropper
+```
