@@ -24,6 +24,12 @@ To prepare for the course, you should do the following before the first class (t
  6. Look at the [schedule](https://cs4401.walls.ninja/schedule) for the first couple of lectures. 
  7. If time allows, read the notes below to set up your local environment for challenge solving.
 
+Optional Preparaton:
+
+ 1. If you'd like an introduction (or refresher) to using command-line
+    interfaces, I highly recommend completing the [Bandit
+challenges](https://overthewire.org/wargames/bandit/). 
+
 ### Course Docker Container
 
 I recommend solving most course challenges inside of an [Epic
