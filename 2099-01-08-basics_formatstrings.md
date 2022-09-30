@@ -91,8 +91,8 @@ string `%s %s`. The `printf` function will parse this string, see the format
 specifiers calling for two additional strings to be printed, and look for the
 addresses of those two strings on the stack. However, no such strings exist
 and, consequently, `printf` will grab the four bytes from the stack from where
-the string addresses should be placed and treat those as string addresses. Most
-likely, `printf` will trigger a segmentation fault when those invalid pointers
+the string addresses should be placed and treat those as string addresses. Possibly,
+`printf` will trigger a segmentation fault when those invalid pointers
 are dereferenced. 
 
 
@@ -153,20 +153,20 @@ printf("what's my age again??? %n \n");
 ```
 
 
-This is essentially the same scenario we discussed previous with our strings
+This is essentially the same scenario we discussed previously with our strings
 example: `printf` will parse the format string, see the `%n`, interpret the
 word at the appropriate location on the stack as the address argument, try to
 write to the location specified by this address, and most likely trigger a
 segmentation fault. 
 
 At this point you might be thinking: "Hmmm, if I can control the format string
-argument to `printf`, and I can leverage that ability to also control  how many
+argument to `printf`, and I can leverage that ability to also control how many
 characters are written via `printf`. Consequently, I can write an arbitrary
 value via `%n`. Further, if I can control values on the stack, then I can
 control the address written to by `%n`. In short, I have a write-what-where
-primitive." If you were thinking this, then you would be correct. We already
-know how powerful a write-what-where vulnerability can be for an attacker,
-e.g., she can hijack the control-flow by targeting the global offset table.
+primitive." If you were thinking this, then you would be correct. A
+write-what-where vulnerability can be very powerful for the attacker, e.g., she
+can hijack the control-flow by targeting entries in the global offset table.
 
 ### Simple Example
 
