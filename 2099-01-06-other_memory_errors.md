@@ -140,10 +140,10 @@ any address we choose.
 
 Note, we don't have to target a return address on the stack. There are many
 other code pointers that might make better targets, e.g., an entry in the
-global offset table. We will talk about the global offset table in another
+global offset table. We've talked about the global offset table in another
 lecture.
 
-For example, consider the `heap1r` challenge:
+For example, consider the following challenge:
 
 ```c
 struct internet {
@@ -180,10 +180,4 @@ int main(int argc, char **argv)
 The buffer overflow in this code leads to write-what-where style vulnerability
 that is very similar to what we saw in the previous example. In particular, we
 can manipulate both where the `name` field from struct `i2` points as well as
-the value that gets written to that location. To understand how this attack is
-possible, we need to first understand how the heap works. For that, I invite
-you to watch this [LiveOverflow video on the basics of
-malloc][liveoverflow-heap]. 
-
-[liveoverflow-heap]: https://youtu.be/HPDBOhiKaD8 
-
+the value that gets written to that location. 
