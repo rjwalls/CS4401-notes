@@ -528,8 +528,10 @@ offset from the start of the text section.  We can find out where the text
 section starts (and the location and size of other regions) using `info proc
 map` in GDB. 
 
+*Psst. Check the source, but be quiet. Don't let the Captain or Professor-Ambassador Walls
+see you.*
 
-Oh, by the way, here is the flag for the `Back to Basics` challenge: `DoTheRequiredReading`.
+<!-- Are you sure you weren't followed? We haven't met yet, but I've heard of you. I'm Ensign Scar'dy.  There seems to be something strange going on. I found this flag lying around, `DoTheRequiredReading`, but I'm not sure where it belongs. I think Walls is up to something. Maybe he left some clues? He's crafty, so he probably put those clues in a place you're supposed to look...-->
 
 ```
 $ gdb ./stack2-64
