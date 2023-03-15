@@ -19,8 +19,8 @@ To prepare for the course, you should do the following before the first class (t
  1. Read the welcome email. The instructor should send this email a day or two before the first class. 
  2. Watch the [Tips and Tricks videos](https://youtube.com/playlist?list=PLeKxIn6N-kCi38WxOqNBXhxrZnOE9SVET). This playlist contains videos of previous students and covers what they think you should know before taking this course.
  3. Read the [course syllabus](https://cs4401.walls.ninja/syllabus). 
- 4. Create an account on the [course infrastructure](https://cs4401.walls.ninja/). Note that you may use an alias as your username---see details below.
- 5. Join the course Discord Server using the link in the welcome email. In the future, I will use Discord rather than email for course communications. Unlike the course website, you should set your Discord nickname for the server as your real name.
+ 4. Create an account on the [course infrastructure](https://cs4401.walls.ninja/). If you are reading this, then you've probably already completed this step.
+ 5. Join the course Discord Server using the link in the welcome email. In the future, I will use Discord rather than email for course communications. You should set your Discord nickname for the server as your real name.
  6. Look at the [schedule](https://cs4401.walls.ninja/schedule) for the first couple of lectures. 
  7. If time allows, read the notes below to set up your local environment for challenge solving.
 
@@ -55,22 +55,6 @@ Epic treasure container.
 echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
 ```
 
-### Video: Introducing the Course Infrastructure
-
-The video below gives a quick introduction on the course infrastructure,
-including important information such as how to create an account and link it to
-the appropriate classroom. **Note: Use `ctfadmin` as the name of the classroom
-owner rather than `rjwalls`**.
-
-Also note that the course webpage includes a scoreboard that displays the
-progress of your peers. **When creating an account, you are welcome to use a
-pseudonym.** That is, you do not need to use your WPI username. However, if you
-decide to use a pseudonym, then you must inform the teaching staff (via email)
-of the username that you have selected. 
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/ncetH_pBTeg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-
 ### Video: Setting up your Local Environment for Challenge Solving
 
 The following video describes my recommended local setup for solving challenge
@@ -84,13 +68,10 @@ challenge binaries, and how to submit flags.
 
 The bulk of your challenge solving should be done in your local container.
 However, it is often useful to be able to run pwntools and gef on the course
-server as well. To set up those tools, running the following on the course
+server as well. I've already setup pwntools for you. However, to set up GEF run the following on the course
 server(s):
 
 ```bash
-# Install pwntools
-python3 -m pip install --upgrade pip && python3 -m pip install --upgrade pwntools
-
 # Install gef
 wget -O ~/.gdbinit-gef.py -q https://gef.blah.cat/py && \
     echo source ~/.gdbinit-gef.py > ~/.gdbinit && \
