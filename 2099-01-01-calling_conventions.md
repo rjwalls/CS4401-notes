@@ -6,11 +6,11 @@ layout: post
 ---
 
 ## What is a calling convention?
-A calling convention is a set of rules that dictate how a program should call a function. Programming languages like C abstract away low-level functionality present in binaries. The compile decides for us how to move the stack pointer and pass parameters into functions at the machine code level. These decisions are specified by an **Application Binary Interface** (ABI). The parts of the ABI that specify how function calls should work is the calling convention.
+A calling convention is a set of rules that dictate how a program should call a function. Programming languages like C abstract away low-level functionality present in binaries. The compiler decides for us how to move the stack pointer and pass parameters into functions in machine code. These decisions are specified by an **Application Binary Interface** (ABI). The parts of the ABI that specify how function calls should work is the calling convention.
 
 Most Linux (or GNU/Linux if you're pedantic) programs use the **System V ABI** (pronounced "System Five"). The System V ABI consists of a Generic ABI document and Processor Supplement documents that contain hardware-specific standards. These documents are available at https://refspecs.linuxbase.org/.
 
-For this course, we're interested in Intel386 and x86_64, which apply to the 32- and 64-bit challenges, respectfully.
+For this course, we're interested in Intel386 and x86_64, which apply to the 32- and 64-bit challenges, respectively.
 To illustrate how calling conventions work, I've written a C program where `main` calls a function that adds six numbers together and returns the sum. 
 
 Below are annotated diagrams for both binary types. The source code is identical for both, but the compiled assembly code is different, highlighting how the parameters in the function call are passed as per the calling convention.
