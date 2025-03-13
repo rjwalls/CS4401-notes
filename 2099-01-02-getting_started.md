@@ -98,7 +98,7 @@ As the names suggest, your public key can be shared with others (in this case, t
 Next, copy your public key to the course server. The easiest way to do this is with `ssh-copy-id`:
 
    ```bash
-   ssh-copy-id username@cs4401shell.walls.ninja
+   ssh-copy-id -i ~/.ssh/id_ed25519.pub username@cs4401shell.walls.ninja
    ```
    
 Replace `username` with your WPI username. You’ll be prompted to enter your platform password. After that, your public key will be added to the `~/.ssh/authorized_keys` file on the course server.
