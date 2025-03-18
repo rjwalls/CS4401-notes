@@ -148,10 +148,14 @@ I’ve already set up the course shell server with most of the tools you’ll ne
 
 #### Installing GEF for GDB
 
-First, you’ll need to install GEF, which is a plugin for GDB that makes debugging much easier and more pleasant to use. GEF adds a bunch of useful features like better visualization of data structures and easier navigation through the code. To set up GEF, run the following command on the course server:
+First, you’ll need to install GEF, which is a plugin for GDB that makes debugging much easier and more pleasant to use. GEF adds a bunch of useful features like better visualization of data structures and easier navigation through the code. To set up GEF, run the following commands on the course server:
 
 ```bash
-wget -O ~/.gdbinit-gef.py -q https://gef.blah.cat/py && \
+cd && \
+git clone https://github.com/hugsy/gef.git
+cd gef
+git checkout 2024.06
+cp gef.py ~/.gdbinit-gef.py
 echo source ~/.gdbinit-gef.py >> ~/.gdbinit
 ```
 
@@ -177,7 +181,7 @@ Now, let’s download a configuration file for Tmux. This step is optional, but 
 
 ```bash
 cd && \
-curl -O https://raw.githubusercontent.com/rjwalls/EpicTreasure/master/22.04/tmux.conf && \
+curl -O https://raw.githubusercontent.com/rjwalls/EpicTreasure/master/24.04/tmux.conf && \
 mv tmux.conf .tmux.conf
 ```
 
@@ -249,7 +253,7 @@ With these configurations, you should have a well-rounded setup that matches wha
 ### Solving Locally with the Course Docker Container
 
 
-Sometimes, you might prefer or need to work directly on your local machine—especially if you have an unreliable internet connection. In these situations, I recommend using the [Epic Treasure](https://github.com/rjwalls/EpicTreasure) Docker container. This container is preloaded with a variety of useful tools that will help you solve most of the course challenges.
+Sometimes, you might prefer or need to work directly on your local machine—especially if you have an unreliable internet connection. In these situations, I recommend using the [Epic Treasure](https://github.com/rjwalls/EpicTreasure) Docker container. This container is preloaded with a variety of useful tools that will help you solve most of the course challenges. **Note: You should only use this container if you have an x86-based computer. Tools in this container, e.g., GDB, will not work as expected on Apple Silicon. 
 
 **Step 1: Install Docker**. Before you can use the Epic Treasure container, you’ll need to install Docker on your machine. Docker is a platform that lets you run applications in lightweight, isolated environments called containers.
 
