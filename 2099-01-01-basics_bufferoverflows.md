@@ -182,7 +182,7 @@ However, there are some important caveats to keep in mind. These mean that explo
 
 #### Important Caveats
 
-The first caveat is that we got a bit lucky with the placement of the `unsecured` variable. `Gets()` writes to `buffer` starting at the beginning and continues writing to higher memory addresses one character at a time. The fact that `unsecured` was located at a higher address than `buffer` allowed our overflow to reach and overwrite it. However, the compiler decides the layout of variables on the stack, so it could have easily placed `unsecured` before `buffer`, making this particular exploit ineffective.
+The first caveat is that we got a bit lucky with the placement of the `unsecured` variable. `gets()` writes to `buffer` starting at the beginning and continues writing to higher memory addresses one character at a time. The fact that `unsecured` was located at a higher address than `buffer` allowed our overflow to reach and overwrite it. However, the compiler decides the layout of variables on the stack, so it could have easily placed `unsecured` before `buffer`, making this particular exploit ineffective.
 
 To summarize visually:
 
