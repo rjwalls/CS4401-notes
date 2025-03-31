@@ -381,7 +381,7 @@ Now is a good time to look at some of the details of binaries---what they are, h
 - How file permissions and the `setuid` bit impact security.
 - The concept of Position Independent Executables (PIE) and how they affect exploit development.
 
-#### #### ELF (Executable and Linkable Format)
+#### ELF (Executable and Linkable Format)
 
 **ELF (Executable and Linkable Format)** is a standard format for executable files on Linux. When you run a program on Linux, the OS takes several steps to load the ELF binary into memory and start the process. Let’s break down this process:
 
@@ -478,6 +478,14 @@ Mapped address spaces:
 
 ### Summary and Review
 
-Today, we dove into the basics of buffer overflows, starting with a straightforward example. We explored how memory is organized on the stack and how understanding this layout can help us craft clever exploits. By now, you should feel more confident in spotting and exploiting buffer overflow vulnerabilities and understand how these exploits can lead to major security issues. We’ve also explored several fundamental concepts related to understanding and working with binaries on Linux.
+Today, we dove into the basics of buffer overflows, starting with a straightforward example. We explored how memory is organized on the stack and how understanding this layout can help us craft clever exploits. By now, you should feel more confident in spotting and exploiting buffer overflow vulnerabilities and understand how these exploits can lead to major security issues. We’ve also explored several fundamental concepts related to understanding and working with binaries on Linux, such as:
+
+- [Virtual Address Space](#virtual-address-space-of-a-process)
+- [Memory Layout](#memory-regions-in-a-process)
+- [Buffer Overflows](#exploiting-the-buffer-overflow-in-stack0)
+- [Disassembling](#looking-at-the-disassembly)
+- [Return Addresses](#introducing-return-addresses)
+- [ELF](<#elf-(executable-and-linkable-format)>)
+- [Positional Independent Executables (PIE)](#pie-binaries)
 
 As you review this material, take some time to review the challenge binaries and see how everything fits together. If you have any questions or need a bit more clarity, don’t hesitate to bring them up in lecture or during office hours.
