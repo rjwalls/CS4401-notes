@@ -242,6 +242,8 @@ It’s important to note that some binaries come with debug symbols---extra info
 
 Before we start, let’s change how `gdb` displays assembly code. Specifically, we’ll switch from the default AT&T syntax to Intel syntax, which is just a different way of writing the same assembly instructions. Both syntaxes are common, but we’ll use Intel syntax here because it’s more widely used in exploit documentation and easier to read for many people.
 
+To learn more about their differences see [this](./2099-01-02-intel_vs_att_syntax.md).
+
 The first thing we are going to do is change how `gdb` displays assembly.
 Specifically, we are telling `gdb` to use Intel syntax rather than AT&T syntax. We do this purely based on personal preference. TODO: Define what intel and at&t syntax are and why both are common.
 
