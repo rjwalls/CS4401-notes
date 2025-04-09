@@ -288,7 +288,7 @@ ROPgadget --binary vuln64 | grep "pop rdi"
 
 Looks like there are a bunch of gadgets in the program, including one that will
 do exactly what we need: pop a value off of the stack and into the argument
-register. Note: the first colum****N*** is the location of the gadget, use x/i in gdb to
+register. Note: the first colum***N*** is the location of the gadget, use x/i in gdb to
 to verify
 
 ```
@@ -302,7 +302,7 @@ grep on the .SO file), but let's do it directly in GDB this time: `find
 command to work.
 
 Putting everything together, we have an attack that looks very similar to how
-we exploited the 32-bit binary. The bi****G*** difference is that added the additional
+we exploited the 32-bit binary. The bi***G*** difference is that added the additional
 step to call our gadget and load the address of "/bin/sh" into `rdi`. 
 
 ```python
