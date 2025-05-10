@@ -393,6 +393,28 @@ To check alignment, place a breakpoint at the start of `system()` and examine RS
 
 Alternatively, you can skip the function prologue of `system()` (bypassing the `push rbp` instruction) to achieve the same effect.
 
+## The One Gadget Technique
+
+When performing a return-to-libc attack on a 64-bit system, we must:
+
+1. Set up the arguments in the appropriate registers
+2. Ensure proper stack alignment (16-byte aligned + 8)
+3. Return to the desired function (e.g., `system()`)
+
+Since we typically cannot directly modify register values, we use Return-Oriented Programming (ROP) to achieve this. For example, to call `system("/bin/sh")`, we would need:
+
+- A `pop rdi; ret` gadget to load the address of "/bin/sh" into RDI
+- Potentially a `ret` gadget to ensure proper stack alignment
+- The address of the `system()` function
+
+The resulting ROP chain might look like:
+
+```
+[address of "pop rdi; ret"] [address of "/bin/sh"] [address of "ret"] [address of system()] [dummy return address]
+```
+
+If the stack is not properly aligned when calling a function, the program might crash when executing instructions that require alignment (like `movaps`). You can check alignment by examining the value of RSP at a breakpoint - if (RSP & 0xf) equals 8, the alignment is correct.
+
 ### Summary
 
 Code reuse attacks leverage existing code in the binary or libraries to achieve execution of arbitrary code. The key techniques covered include:
@@ -408,8 +430,20 @@ Code reuse attacks leverage existing code in the binary or libraries to achieve 
    - Gadgets can set up register values, perform calculations, or manipulate memory
    - Tools like ROPgadget can identify useful gadgets
 
-3. **Defeating ASLR**: Information leaks provide addresses that allow targeting randomized memory regions.
+3. **The One Gadget Technique**: Using special locations in libc that will spawn a shell with a single jump.
 
-4. **Stack Alignment**: 64-bit systems require 16-byte stack alignment, which must be handled properly when building ROP chains.
+   - Requires only a single code pointer overwrite
+   - Must satisfy specific register/memory constraints
+   - Bypasses the need for complex ROP chains
+
+4. **Stack Pivoting**: Technique to move the stack pointer to a controlled location.
+
+   - Useful when the original stack is limited or corrupted
+   - Often uses gadgets like "leave; ret" or "xchg rsp, rxx; ret"
+   - Enables more complex ROP chains in constrained environments
+
+5. **Defeating ASLR**: Information leaks provide addresses that allow targeting randomized memory regions.
+
+6. **Stack Alignment**: 64-bit systems require 16-byte stack alignment, which must be handled properly when building ROP chains.
 
 These techniques allow attackers to bypass common protections like non-executable stack (NX) and build powerful exploits using only the code already present in the program's address space.
