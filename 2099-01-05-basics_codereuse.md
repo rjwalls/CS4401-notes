@@ -1,7 +1,7 @@
 ---
-title:  "Lecture Notes: Basics of Code Reuse"
-date:   2020-01-05 03:01:00
-categories: notes lecture 
+title: "Lecture Notes: Basics of Code Reuse"
+date: 2020-01-05 03:01:00
+categories: notes lecture
 layout: post
 challenges: heap1 heap2 heap3 stack4 stack5 stack6
 ---
@@ -9,30 +9,30 @@ challenges: heap1 heap2 heap3 stack4 stack5 stack6
 Up until now we've been focusing on a specific class of attacks: **code
 injection**. In these attacks, the attacker injects their own code into a
 vulnerable program and then hijacks the control flow of the program and
-executes that injected code. 
+executes that injected code.
 
 We've also talked about a number of automated ways to defend against such
 attacks. ("automated" here means that the defense can be implemented without
-any changes to the source code). First, we can make ***I***t harder to leverage a
+any changes to the source code). First, we can make **_I_**t harder to leverage a
 buffer overflow to hijack the control flow, e.g., by using stack canaries to
 protect the return address saved on the stack or ASLR to randomize the location
 of objects in memory. Second, we've discussed how memory permissions can make
-it impossible to execute any code on the stack.  Specifically, by following a
+it impossible to execute any code on the stack. Specifically, by following a
 simple invariant: memory that is writable cannot be executed and memory that is
-executable cannot be writeable. Often this type of defense is called 
+executable cannot be writeable. Often this type of defense is called
 **setting the NX bit** or **data execution prevention (DEP)**, depending on the
-specific implementation.  For this lecture we are going to focus on bypassing
-restrictions on writable memory execution using **code reuse** attacks. 
+specific implementation. For this lecture we are going to focus on bypassing
+restrictions on writable memory execution using **code reuse** attacks.
 
 With DEP, there is no location in memory that an attacker can both modify and
-execute.  Consequently, data injected by the attacker (e.g., shellcode) will
+execute. Consequently, data injected by the attacker (e.g., shellcode) will
 always be treated as data (i.e., not as code). Fortunately (if you like
-b***R***eaking software), there is a simple solution to this problem (simple in
-concept, but tricky to implement in many situations): *reuse code that
-is already in the binary.*
+b**_R_**eaking software), there is a simple solution to this problem (simple in
+concept, but tricky to implement in many situations): _reuse code that
+is already in the binary._
 
 Below we introduce the two most basic code-reuse attacks: **return-to-libc**
-and **return-oriented programming**. 
+and **return-oriented programming**.
 
 ### Return-to-libc (ret2libc)
 
@@ -40,14 +40,14 @@ Return-to-libc is a code reuse attack that redirect control flow to execute
 useful functions that are in commonly-used libraries (e.g., libc). A
 particularly useful function is `system()`. The behavior of `system()` is
 actually similar to basic shellcode: `system()` will create a child process and
-execute the shell command specified by the arguments.  
+execute the shell command specified by the arguments.
 
 Let's take a look at how a call to `system()` works in a 32-bit binary by
 writing a simple program:
 
 ```
-// Note: we can compile a 32-bit binary on a 64-bit system using: 
-// `gcc -o sys32 -m32 sys.c`. 
+// Note: we can compile a 32-bit binary on a 64-bit system using:
+// `gcc -o sys32 -m32 sys.c`.
 
 #include <stdio.h>
 
@@ -74,13 +74,11 @@ End of assembler dump.
 
 ```
 
-
-By looking at the disass***E***mbly of `main()`,  we see the address of the
+By looking at the disass**_E_**mbly of `main()`, we see the address of the
 command string ("echo peanut") is pushed to the stack immediately before the
-`call` instruction.  We know from our discussion of 32-bit calling conventions
+`call` instruction. We know from our discussion of 32-bit calling conventions
 that this is the argument to `system`. A quick gdb command shows us that we are
-right: `x/s 0x80484b0`. 
-
+right: `x/s 0x80484b0`.
 
 This calling convention should be familiar to us by now. What you might not
 remember is that the `call` instruction will implicitly push the return address
@@ -89,10 +87,10 @@ when we manually call `system`---during our ret2libc attack---we have to set up
 the stack to include both the correct arguments and the pushed return address.
 For this simple example, we don't really care what value we use for the return
 address, but setting this value could be useful for chaining together calls to
-libc functions. 
+libc functions.
 
 Let's draw out what the stack looks like the moment `system()` starts
-executing, i.e., how the stack should look for our ret2libc attack to work. 
+executing, i.e., how the stack should look for our ret2libc attack to work.
 
 ```
 Note: Stack grows to the left, higher addresses to the right.
@@ -110,24 +108,23 @@ ret: the saved return address
 Top of the stack when system function starts executing.
 ```
 
-
 Using our observation of how our simple test program calls system, we
 can list the basic steps that are needed for a ret2libc attack using `system()`:
- 1. find where the code for `system()` lives in memory,
- 2. set up the st***A***ck (and/or registers for 64-bit binaries) with the proper
-    arguments and a dummy return address, and 
- 3. hijack the control-flow of the program to execute the ***D***esired function. 
- 
- 
-### Our First ret2libc Exploit 
+
+1.  find where the code for `system()` lives in memory,
+2.  set up the st**_A_**ck (and/or registers for 64-bit binaries) with the proper
+    arguments and a dummy return address, and
+3.  hijack the control-flow of the program to execute the **_D_**esired function.
+
+### Our First ret2libc Exploit
 
 Let's try to apply our knowledge to a simple vulnerable program. `r`
 
 ```c
-// File: vuln.c 
+// File: vuln.c
 // gcc -o vuln vuln.c -m32 -fno-stack-protector
 #include <stdlib.h>
-#include <stdio.h> 
+#include <stdio.h>
 
 
 void main() {
@@ -163,48 +160,48 @@ The added complication here is that our compiler inserted some instructions
 (from `*main+0 to +7`) to properly align the stack and save the previous
 location of the stack pointer. This code slightly complicates our exploit. We
 aren't going to overwrite the saved return address, instead, we are going to
-manipulate the valu***E*** used to set the stack pointer, e.g., instructions
+manipulate the valu**_E_** used to set the stack pointer, e.g., instructions
 `*main+37 to +44`. Note, if we had complied with the flag
 `-mpreferred-stack-boundary=2` then we could have targeted the saved return
-address directly.  
+address directly.
 
 Our attack will work as follows:
- 1. Figure out the offset from the vulnerable buffer to the saved stack pointer.  
- 2. Figure out the addresses of our environment variable, `system`, and the
-    `/bin/sh` string. 
- 3. Setup our en***V***ironment variable with the needed stack layout.  
- 4. Send the exploit string that will cause `esp` to point to our environment variable.  
+
+1.  Figure out the offset from the vulnerable buffer to the saved stack pointer.
+2.  Figure out the addresses of our environment variable, `system`, and the
+    `/bin/sh` string.
+3.  Setup our en**_V_**ironment variable with the needed stack layout.
+4.  Send the exploit string that will cause `esp` to point to our environment variable.
 
 **Step 1. Finding the Offset.** By sending a long cyclic string, we can use
 information from the resulting core dump to find the offset from the start of
 the vulnerable buffer to the saved stack pointer. In particular, we want to
 examine the value in register `ecx` as that register is used in `*main+41` to
-set the stack pointer. *Potential gotcha:* Note that if you used the fault
+set the stack pointer. _Potential gotcha:_ Note that if you used the fault
 address given in the core you will get the wrong offset due to subtraction of
-`0x4` from `ecx`.  
-
+`0x4` from `ecx`.
 
 **Step 2. Finding useful addresses.** We can use the corefile directly to find
 the address of the `WIN` environment variable. To find the address of `system`
 and the `/bin/sh` string in libc, we are going to get the offsets directly from
 the libc shared object file and add that to the runtime address of libc given
-by corefile.   Note that we could pass an arbitrary string to `system` by
-placing that string on the stack in our vulnerabl***E*** buffer or throwing it in an
+by corefile. Note that we could pass an arbitrary string to `system` by
+placing that string on the stack in our vulnerabl**_E_** buffer or throwing it in an
 environment variable; however, the "/bin/sh" string already exists in the libc
 code and its address tends to be more predictable than stack addresses.
 
 **Step 3. Setting up the environment variable.** It is not enough to manipulate
 the stack pointer to point at a location we control. We also need to make sure
 that the new top of the stack is setup how system function is expecting. In
-other wo***R***ds, we want to setup the appropriate arguments in our environment
+other wo**_R_**ds, we want to setup the appropriate arguments in our environment
 variable. The notes in the previous section explain what this setup should look
-like.  
+like.
 
 **Step 4. Manipulate the stack pointer.** Finally, we want to modify the saved
 stack pointer location so that it will instead point to our environment
 variable. This manipulation will allow us to control the return address used by
-the  `ret` instruction. We want our environment variable `WIN` to become the
-new top of the stack so that the new return address will be `system`. 
+the `ret` instruction. We want our environment variable `WIN` to become the
+new top of the stack so that the new return address will be `system`.
 
 Putting it all together we have our full attack:
 
@@ -227,21 +224,21 @@ assert pack(p.corefile.ecx) in cyclic(128)
 
 offset = cyclic_find(pack(p.corefile.ecx))
 
-print "Offset: ", offset 
+print "Offset: ", offset
 print "WIN addr: ", hex(p.corefile.env['WIN'])
 
 libc = ELF(p.corefile.libc.path)
 
-system_addr = libc.symbols.system + p.corefile.libc.start  
+system_addr = libc.symbols.system + p.corefile.libc.start
 dummy_ret = 'aaaa'
-binsh_str_addr = p.corefile.libc.find('/bin/sh') 
+binsh_str_addr = p.corefile.libc.find('/bin/sh')
 
 exploit_str = flat({offset:pack(p.corefile.env['WIN']+4)})
-   
-env_str = flat( 
-    pack(system_addr), 
-    dummy_ret, 
-    pack(binsh_str_addr) 
+
+env_str = flat(
+    pack(system_addr),
+    dummy_ret,
+    pack(binsh_str_addr)
     )
 
 with open('input.txt', 'wb') as f:
@@ -257,38 +254,38 @@ p.interactive()
 ### Return oriented programming
 
 Now let's take a look at how system would be called in the 64-bit version of
-our vulnerable binar***Y***. The primary difference between the 32 and 64-bit
+our vulnerable binar**_Y_**. The primary difference between the 32 and 64-bit
 binaries is that the arguments are passed via registers and not the stack (up
 to a certain number of arguments). This change means that `system` is going to
-looking for its  argument (i.e., the address of the "/bin/sh" string) in the
+looking for its argument (i.e., the address of the "/bin/sh" string) in the
 `rdi` register rather than on the stack. This complicates our ret2libc attack
 because now we have to find a way to load a particular value into the `rdi`
 register, when before we just had to manipulate the stack layout a bit. To
 solve this problem, we are going to add an extra step to our ret2libc attack.
 
-Let's ***T***ry to exploit our program: `gcc -o vuln64 vuln.c -fno-stack-protector`.
+Let's **_T_**ry to exploit our program: `gcc -o vuln64 vuln.c -fno-stack-protector`.
 Like before, we are going to reuse code that is already in the program. So
 first we find the address of system using gdb: `p &system`.
 
 Here's the new bit. Now we want to find **gadgets** to that will do the work of
-loading `rdi` for us.  In its simplest form, a gadget is a s***H***ort sequence of
-instructions ending in a return.  This technique is often called
+loading `rdi` for us. In its simplest form, a gadget is a s**_H_**ort sequence of
+instructions ending in a return. This technique is often called
 **return-oriented programming**.
 
 What we need is a gadget that will load a value from the stack (because we can
 control what values are placed stack) into the correct argument register
-(`rdi`).  Finding these gadgets ***I***s an art and often involves some manual
+(`rdi`). Finding these gadgets **_I_**s an art and often involves some manual
 checking. For instance, we can use objdump to look at all of the instructions
-until we find a useful gadget.  Fortunately, there are programs already
-installed in EpicTreasure that make searching for gadgets easier. 
+until we find a useful gadget. Fortunately, there are programs already
+installed in EpicTreasure that make searching for gadgets easier.
 
 ```
 ROPgadget --binary vuln64 | grep "pop rdi"
-``` 
+```
 
 Looks like there are a bunch of gadgets in the program, including one that will
 do exactly what we need: pop a value off of the stack and into the argument
-register. Note: the first colum****N*** is the location of the gadget, use x/i in gdb to
+register. Note: the first colum\***_N_** is the location of the gadget, use x/i in gdb to
 to verify
 
 ```
@@ -302,8 +299,8 @@ grep on the .SO file), but let's do it directly in GDB this time: `find
 command to work.
 
 Putting everything together, we have an attack that looks very similar to how
-we exploited the 32-bit binary. The bi****G*** difference is that added the additional
-step to call our gadget and load the address of "/bin/sh" into `rdi`. 
+we exploited the 32-bit binary. The bi\***_G_** difference is that added the additional
+step to call our gadget and load the address of "/bin/sh" into `rdi`.
 
 ```python
 #file: rop.py
@@ -331,3 +328,122 @@ multiple arguments.
 
 Hint: Make sure to read every character, in order, top to bottom.
 
+## Return-to-libc on 64-bit Systems
+
+When we move to 64-bit systems, the return-to-libc attack becomes more complex due to two key differences:
+
+1. **Different Calling Convention**: In 64-bit systems, arguments are passed via registers rather than the stack:
+
+   - First argument: RDI
+   - Second argument: RSI
+   - Third argument: RDX
+   - Fourth argument: RCX
+   - Fifth argument: R8
+   - Sixth argument: R9
+   - Additional arguments are passed on the stack
+
+2. **Stack Alignment Requirements**: The System V ABI for x86-64 requires the stack to be 16-byte aligned at the point of a function call. After the `call` instruction executes (which pushes the 8-byte return address), the stack pointer will be at an address that is 16-byte aligned plus 8. If this alignment isn't maintained, the program may crash when executing certain instructions like `movaps`.
+
+### Return-Oriented Programming (ROP)
+
+Since arguments in 64-bit are passed through registers, we need a way to control register values. This is where **Return-Oriented Programming (ROP)** becomes crucial.
+
+ROP is a technique that chains together small sequences of instructions (called "gadgets") that end with a `ret` instruction. Each gadget performs a specific operation before returning to the next gadget in the chain.
+
+#### Finding Gadgets
+
+Tools like ROPgadget can automatically find useful gadgets in a binary:
+
+```bash
+ROPgadget --binary ./program
+```
+
+The most useful gadgets for 64-bit return-to-libc are those that pop values into registers:
+
+```
+0x00000000004005b3 : pop rdi ; ret
+0x00000000004005b1 : pop rsi ; pop r15 ; ret
+```
+
+#### Building a ROP Chain
+
+For a basic return-to-libc attack calling `system("/bin/sh")` on a 64-bit system, our ROP chain might look like:
+
+1. Address of `pop rdi; ret` gadget
+2. Address of "/bin/sh" string
+3. [Optional] Address of a `ret` gadget for stack alignment
+4. Address of `system()` function
+5. "Dummy" return address (like the address of `exit()`)
+
+This chain works as follows:
+
+- The `pop rdi; ret` gadget pops the address of "/bin/sh" into RDI (first argument)
+- The optional `ret` gadget adjusts stack alignment if needed
+- Then execution jumps to `system()` with "/bin/sh" in RDI
+- After `system()` completes, it returns to `exit()` (or whatever address we placed)
+
+#### Stack Alignment
+
+If the stack is not properly aligned when calling `system()`, the program may crash with a SIGSEGV when executing an instruction like `movaps` which requires 16-byte alignment.
+
+To check alignment, place a breakpoint at the start of `system()` and examine RSP:
+
+- If (RSP & 0xf) equals 8, the alignment is correct
+- If not, you need to add a single `ret` gadget before calling `system()`
+
+Alternatively, you can skip the function prologue of `system()` (bypassing the `push rbp` instruction) to achieve the same effect.
+
+## The One Gadget Technique
+
+When performing a return-to-libc attack on a 64-bit system, we must:
+
+1. Set up the arguments in the appropriate registers
+2. Ensure proper stack alignment (16-byte aligned + 8)
+3. Return to the desired function (e.g., `system()`)
+
+Since we typically cannot directly modify register values, we use Return-Oriented Programming (ROP) to achieve this. For example, to call `system("/bin/sh")`, we would need:
+
+- A `pop rdi; ret` gadget to load the address of "/bin/sh" into RDI
+- Potentially a `ret` gadget to ensure proper stack alignment
+- The address of the `system()` function
+
+The resulting ROP chain might look like:
+
+```
+[address of "pop rdi; ret"] [address of "/bin/sh"] [address of "ret"] [address of system()] [dummy return address]
+```
+
+If the stack is not properly aligned when calling a function, the program might crash when executing instructions that require alignment (like `movaps`). You can check alignment by examining the value of RSP at a breakpoint - if (RSP & 0xf) equals 8, the alignment is correct.
+
+### Summary
+
+Code reuse attacks leverage existing code in the binary or libraries to achieve execution of arbitrary code. The key techniques covered include:
+
+1. **Return-to-libc**: Redirecting control flow to library functions like `system()` to execute commands.
+
+   - In 32-bit systems, arguments are passed on the stack
+   - In 64-bit systems, arguments are passed in registers, requiring ROP techniques
+
+2. **Return-Oriented Programming (ROP)**: Chaining together small code sequences (gadgets) to perform complex operations.
+
+   - Each gadget ends with a `ret` instruction
+   - Gadgets can set up register values, perform calculations, or manipulate memory
+   - Tools like ROPgadget can identify useful gadgets
+
+3. **The One Gadget Technique**: Using special locations in libc that will spawn a shell with a single jump.
+
+   - Requires only a single code pointer overwrite
+   - Must satisfy specific register/memory constraints
+   - Bypasses the need for complex ROP chains
+
+4. **Stack Pivoting**: Technique to move the stack pointer to a controlled location.
+
+   - Useful when the original stack is limited or corrupted
+   - Often uses gadgets like "leave; ret" or "xchg rsp, rxx; ret"
+   - Enables more complex ROP chains in constrained environments
+
+5. **Defeating ASLR**: Information leaks provide addresses that allow targeting randomized memory regions.
+
+6. **Stack Alignment**: 64-bit systems require 16-byte stack alignment, which must be handled properly when building ROP chains.
+
+These techniques allow attackers to bypass common protections like non-executable stack (NX) and build powerful exploits using only the code already present in the program's address space.
