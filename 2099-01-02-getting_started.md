@@ -146,20 +146,6 @@ With this alias, you can connect to the server by simply typing `cs4401shell`. I
 
 I’ve already set up the course shell server with most of the tools you’ll need to solve the challenges. However, there are a few additional steps you’ll need to take to complete your environment.
 
-#### Installing GEF for GDB
-
-First, you’ll need to install GEF, which is a plugin for GDB that makes debugging much easier and more pleasant to use. GEF adds a bunch of useful features like better visualization of data structures and easier navigation through the code. To set up GEF, run the following commands on the course server:
-
-```bash
-cd && \
-git clone https://github.com/hugsy/gef.git
-cd gef
-git checkout 2024.06
-cp gef.py ~/.gdbinit-gef.py
-echo source ~/.gdbinit-gef.py >> ~/.gdbinit
-```
-
-This command downloads the GEF plugin and configures GDB to load it automatically whenever you start a debugging session.
 #### Setting Up Tmux
 
 Next, we’ll configure Tmux to automatically start whenever you connect to the shell server. Tmux is a terminal multiplexer that allows you to manage multiple terminal sessions within a single window. By setting this up, you gain some important features like the ability to resume shell sessions automatically and the convenience of launching a debug session directly from your exploit scripts.
