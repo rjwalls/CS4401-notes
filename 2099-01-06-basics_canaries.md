@@ -115,7 +115,7 @@ via `fs`. Although since the `fs` register uses segmentation based addressing an
 virtual memory addressing, it is difficult to locate it's actual location in memory.
 
 ```
-+pwndbg> x/10i $pc
+(gdb) x/10i $pc
 => 0x555555554857 <vuln+93>:    xor    rax,QWORD PTR fs:0x28
    0x555555554860 <vuln+102>:   je     0x555555554867 <vuln+109>
    0x555555554862 <vuln+104>:   call   0x5555555546a0 <__stack_chk_fail@plt>
@@ -126,9 +126,9 @@ virtual memory addressing, it is difficult to locate it's actual location in mem
    0x55555555486d <main+4>:     sub    rsp,0x10
    0x555555554871 <main+8>:     mov    DWORD PTR [rbp-0x4],edi
    0x555555554874 <main+11>:    mov    QWORD PTR [rbp-0x10],rsi
-+pwndbg>  i r $rax
+(gdb) i r $rax
 rax            0xe0ea5fd06e21a700       -2239872515857864960
-+pwndbg>  search -t bytes --hex 00a7216e
+(gdb) search -t bytes --hex 00a7216e
 warning: Unable to access 16000 bytes of target memory at 0x7ffff7bd4d03, halting search.
                 0x7ffff7fe9728 0xe0ea5fd06e21a700
 [stack]         0x7fffffffadf0 0xe0ea5fd06e21a700

@@ -229,12 +229,12 @@ really that fancy) to reopen stdin, or you use the cat trick:
 (python exploit.py; cat) | ./vulnerable_prog
 ```
 
-**How to check if the stack is executable:** In the EpicTreasure docker image,
-you can use `checksec`---look for the string "NX disabled":
+**How to check if the stack is executable:** On the course shell server, you
+can use `checksec`---look for the string "NX disabled":
 
 ```
 (ins)$ checksec ./stack4-64
-[*] '/root/host-share/stack4-64'
+[*] './stack4-64'
     Arch:     amd64-64-little
     RELRO:    Partial RELRO
     Stack:    No canary found
@@ -283,4 +283,4 @@ Shellcode development typically requires:
 3. Injecting these bytes into memory through a vulnerability
 4. Redirecting execution to this memory location
 
-The [Pwntools library](../2099-01-04-pwntools.md) greatly simplifies this process with its shellcraft module. When developing shellcode exploits, you'll often encounter environment-specific challenges that require techniques like NOP sleds to increase reliability.
+The [Pwntools library](https://docs.pwntools.com/en/stable/) greatly simplifies this process with its shellcraft module. When developing shellcode exploits, you'll often encounter environment-specific challenges that require techniques like NOP sleds to increase reliability.

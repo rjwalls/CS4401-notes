@@ -10,24 +10,20 @@ This set of notes will guide you through the initial steps to get up and running
 
 To make the most out of the first few lectures, it’s a good idea to complete the following tasks as soon as possible:
 
-1. **Watch the [Tips and Tricks videos](https://youtube.com/playlist?list=PLeKxIn6N-kCi38WxOqNBXhxrZnOE9SVET)**: These videos feature advice from former students on what they think you should know before diving into this course.
-    
-2. **Read the [course syllabus](https://cs4401.walls.ninja/syllabus)**: Familiarize yourself with the course structure, policies, and expectations.
-    
-3. **Create an account on the [course infrastructure](https://cs4401.walls.ninja/)**: If you’re reading this, you’ve likely already completed this step.
-    
-4. **Join the course Discord server**: Use the link provided to you. From now on, we’ll be using Discord for all course communications instead of email. Please set your Discord nickname to your real name.
-    
-5. **Check the [schedule](https://cs4401.walls.ninja/schedule)**: Take a look at the schedule for the first few lectures to know what’s coming up.
-    
-6. **Set up your local environment for challenge solving**: Follow the instructions below to ensure you’re ready to tackle the challenges.
+1. **Read the [course syllabus](https://cs4401.walls.ninja/syllabus)**: Familiarize yourself with the course structure, policies, and expectations.
+
+2. **Join the course Discord server**: Use the link provided to you. From now on, we’ll be using Discord for all course communications instead of email. Please set your Discord nickname to your real name.
+
+3. **Check the [schedule](https://cs4401.walls.ninja/schedule)**: Take a look at the schedule for the first few lectures to know what’s coming up.
+
+4. **Set up access to the course shell server**: Follow the instructions below to ensure you’re ready to tackle the challenges in the same environment we will use during lecture.
     
 
-**Optional Preparation:**If you’d like a refresher or an introduction to using command-line interfaces, I highly recommend working through the [Bandit challenges](https://overthewire.org/wargames/bandit/).
+**Optional Preparation:** If you’d like a refresher or an introduction to using command-line interfaces, I highly recommend working through the [Bandit challenges](https://overthewire.org/wargames/bandit/).
 
 ### Working with the Course Server
 
-I’ve set up a server environment specifically for this course, where you can solve most of the challenges. This server comes preloaded with essential tools like `vim`, `tmux`, `pwntools`, and `gdb`, but there are still some configurations you’ll need to set up based on your preferences.
+I’ve set up a server environment specifically for this course, and this should be your default place to solve challenges. The course shell server comes preloaded with essential tools like `vim`, `tmux`, `pwntools`, `gdb`, and GEF, but there are still some configurations you’ll need to set up based on your preferences.
 
 Here’s a quick overview of these tools:
 
@@ -35,15 +31,19 @@ Here’s a quick overview of these tools:
 - **Tmux**: A terminal multiplexer that allows you to run multiple terminal sessions within a single window, making it easier to manage your workflow.
 - **Pwntools**: A CTF (Capture the Flag) framework and exploit development library, perfect for writing exploits in Python.
 - **GDB (GNU Debugger)**: A powerful debugger that lets you inspect and control the execution of programs, essential for understanding how binaries work and for developing exploits.
+- **GEF (GDB Enhanced Features)**: An extension that makes GDB friendlier for exploit development and binary analysis.
 
-During lectures, I’ll be using this server to solve challenges, and I recommend you use it as well, especially if you have a computer with Apple Silicon. Apple Silicon uses a different hardware architecture than the challenge binaries, which can complicate the use of tools like GDB, even when using Docker. If you have an x86-based machine, the Docker-container method mentioned later in these notes is also a great option.
+During lectures, I’ll be using this server to solve challenges, and I strongly recommend you use it as well. The course binaries are primarily compiled for x86 and x86-64 Linux systems, and the shell server runs on x86-64 hardware. Many laptops, including Apple Silicon Macs and other ARM-based systems, use a different architecture. That mismatch can make GDB, process tracing, and exploit behavior frustrating or misleading, even when Docker or emulation is involved. Solving on the course server also keeps you close to the deployed challenge services, which helps avoid network-latency weirdness in timing-sensitive challenges.
+
+You may eventually want a local challenge-solving environment if you start doing CTFs or binary exploitation outside this course. That is useful, but it is a secondary workflow. For this class, start with the course shell server.
 
 To get up and running with the server, you’ll need to:
 
 1. Set up your SSH keys for secure access.
-2. Install GEF (GDB Enhanced Features) to make debugging easier.
+2. Get familiar with GDB and GEF, which are already configured on the shell server.
 3. Configure `tmux`.
 4. Optionally, configure vim.
+5. Install Ghidra on your own computer.
 
 ### Setting up SSH
 
@@ -144,7 +144,7 @@ With this alias, you can connect to the server by simply typing `cs4401shell`. I
 
 ### Final Configuration Steps
 
-I’ve already set up the course shell server with most of the tools you’ll need to solve the challenges. However, there are a few additional steps you’ll need to take to complete your environment.
+I’ve already set up the course shell server with most of the tools you’ll need to solve the challenges. However, there are a few additional steps you’ll need to take to complete your shell account.
 
 #### Setting Up Tmux
 
@@ -172,6 +172,12 @@ mv tmux.conf .tmux.conf
 ```
 
 Feel free to customize this file if you want to personalize your setup.
+
+The config changes the Tmux prefix key from the default `Ctrl-b` to `Ctrl-a`,
+which is what I use during lecture. It also enables mouse support, gives you
+`h`, `j`, `k`, and `l` shortcuts for moving between panes, keeps new panes and
+windows in your current directory, increases the scrollback history, and adds a
+status bar with useful system information.
 
 **Note on scrolling in Tmux**: Scrolling can be a bit tricky in Tmux. If you’re using the configuration file above, you can scroll by pressing `Ctrl-a` followed by `[` and then using the arrow keys. Press `Esc` to stop scrolling and return to input mode.
 
@@ -236,10 +242,24 @@ git clone https://github.com/tpope/vim-sensible.git
 
 With these configurations, you should have a well-rounded setup that matches what I’ll be using during lectures.
 
-### Solving Locally with the Course Docker Container
+### Installing Ghidra
+
+Ghidra is a graphical reverse-engineering tool that you should install on your own computer. We will use the shell server for running and debugging challenge binaries, but Ghidra is useful for inspecting binaries, reading disassembly, and understanding program structure.
+
+There are several ways to install Ghidra depending on your operating system. Start with the [official Ghidra installation instructions](https://github.com/NationalSecurityAgency/ghidra), and make sure you install any required Java runtime or development kit. On macOS, one option is [Homebrew](https://formulae.brew.sh/formula/ghidra):
+
+```bash
+brew install ghidra
+```
+
+If you do not use Homebrew, or if you are on Windows or Linux, follow the installation path that makes sense for your system. The important part is that you have a working Ghidra installation available on your own machine.
+
+### Optional: Local CTF Environment
 
 
-Sometimes, you might prefer or need to work directly on your local machine—especially if you have an unreliable internet connection. In these situations, I recommend using the [Epic Treasure](https://github.com/rjwalls/EpicTreasure) Docker container. This container is preloaded with a variety of useful tools that will help you solve most of the course challenges. **Note: You should only use this container if you have an x86-based computer. Tools in this container, e.g., GDB, will not work as expected on Apple Silicon. 
+If you keep doing CTFs or binary exploitation outside this course, you may eventually want a local environment. The [Epic Treasure](https://github.com/rjwalls/EpicTreasure) Docker container is one way to do that. This is optional for this course, and it is best suited for x86 or x86-64 machines.
+
+Do not treat this container as a replacement for the course shell server. If you have an ARM-based computer, such as an Apple Silicon Mac, tools like GDB will not behave the same way on x86 challenge binaries. Even on x86 machines, local libraries, kernel settings, and network distance can differ from the course infrastructure. When in doubt, solve course challenges on the course shell server.
 
 **Step 1: Install Docker**. Before you can use the Epic Treasure container, you’ll need to install Docker on your machine. Docker is a platform that lets you run applications in lightweight, isolated environments called containers.
 
@@ -262,7 +282,7 @@ Let’s break down what this command does:
 **Note for Windows Users**: Some Windows users might experience issues with Tmux, such as text printing incorrectly (e.g., scrolling repeated text). If you encounter these problems or prefer not to use Tmux, you can simply remove `tmux` from the command:
 
 ```bash
-docker run --privileged -v ${PWD}:/root/host-share --rm -it --workdir=/root rjwalls/epictreasure`
+docker run --privileged -v ${PWD}:/root/host-share --rm -it --workdir=/root rjwalls/epictreasure
 ```
 
 

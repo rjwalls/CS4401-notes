@@ -416,11 +416,11 @@ The `setuid` feature is helpful for tasks that require temporary elevated privil
 
 Some binaries are compiled to be position-independent, meaning that their code sections can be loaded at different memory locations each time the program runs. These are called **Position Independent Executables** or **PIE** binaries. PIE, when combined with Address Space Layout Randomization (ASLR), enhances security by making it harder for attackers to predict where specific functions or code sequences will be located in memory. This feature complicates the creation of exploits because, as an attacker, you often need to know the exact memory addresses of certain functions. We'll talk more about randomization and how to bypass it in future lectures.
 
-You can check if a binary is compiled with PIE support using the `checksec` utility, which is included in the EpicTreasure docker image. For example:
+You can check if a binary is compiled with PIE support using the `checksec` utility, which is available on the course shell server. For example:
 
 ```
 $ checksec ./stack2-64
-[*] '/root/host-share/stack2-64'
+[*] './stack2-64'
     Arch:     amd64-64-little
     RELRO:    Full RELRO
     Stack:    No canary found
@@ -432,7 +432,7 @@ Another clue that PIE is enabled is if function addresses are at low addresses, 
 
 ```
 $ gdb ./stack2-64
-+pwndbg> p win
+(gdb) p win
 $1 = {void ()} 0x7aa <win>
 ```
 
@@ -440,13 +440,13 @@ Here, the `win()` function is located at `0x7aa`, a low address, indicating that
 
 ```
 $ gdb ./stack2-64
-+pwndbg> b main
+(gdb) b main
 Breakpoint 1 at 0x824: file stack2.c, line 24.
-+pwndbg> r
+(gdb) r
 
 ...Omitted for clarity...
 
-+pwndbg> p win
+(gdb) p win
 $2 = {void ()} 0x5555555547aa <w
 
 ```
@@ -460,18 +460,18 @@ see you._
 
 ```
 $ gdb ./stack2-64
-+pwndbg> b main
+(gdb) b main
 Breakpoint 1 at 0x824: file stack2.c, line 24.
-+pwndbg> r
+(gdb) r
 
 ...Omitted for clarity...
 
-+pwndbg> info proc map
+(gdb) info proc map
 process 2155
 Mapped address spaces:
 
           Start Addr           End Addr       Size     Offset objfile
-      0x555555554000     0x555555555000     0x1000        0x0 /root/host-share/stack2-64
+      0x555555554000     0x555555555000     0x1000        0x0 /path/to/stack2-64
 ...Omitted for clarity...
       0x7ffffffde000     0x7ffffffff000    0x21000        0x0 [stack]
 ...Omitted for clarity...

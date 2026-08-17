@@ -60,7 +60,7 @@ void main() {
 ```
 
 ```
-+pwndbg> disass *main
+(gdb) disass *main
 Dump of assembler code for function main:
    0x0804840b <+0>:	  push   ebp
    0x0804840c <+1>:	  mov    ebp,esp
@@ -134,7 +134,7 @@ void main() {
 ```
 
 ```
-+pwndbg> disass *main
+(gdb) disass *main
 Dump of assembler code for function main:
    0x0804840b <+0>:	lea    ecx,[esp+0x4]
    0x0804840f <+4>:	and    esp,0xfffffff0
@@ -277,7 +277,7 @@ control what values are placed stack) into the correct argument register
 (`rdi`). Finding these gadgets **_I_**s an art and often involves some manual
 checking. For instance, we can use objdump to look at all of the instructions
 until we find a useful gadget. Fortunately, there are programs already
-installed in EpicTreasure that make searching for gadgets easier.
+installed on the course shell server that make searching for gadgets easier.
 
 ```
 ROPgadget --binary vuln64 | grep "pop rdi"
