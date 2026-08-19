@@ -3,10 +3,10 @@ title: "Lecture Notes: Basics of Buffer Overflows"
 date: 2020-01-01 02:00:00
 categories: notes lecture
 layout: post
-challenges: stack0r-64 stack1r-64 stack2r-64 stack0r-guessdown stack2r-warp-drive
+challenges: stack0r-64-557 stack1r-64-557 stack2r-64-557 stack0r-guessdown-557 stack2r-warp-drive-557
 ---
 
-Over the first few lectures, we are going to jump straight into binary exploitation. We will start with a very simple bug---a stack-based buffer overflow caused by `gets()`---and, somewhat intentionally, keep exploiting essentially that same bug for several challenges.
+Over the first few lectures, we are going to jump straight into binary exploitation. We will start with a very simple bug---a stack-based buffer overflow caused by an oversized read---and, somewhat intentionally, keep exploiting essentially that same bug for several challenges.
 
 Why keep using the same bug? Because the buffer overflow itself is not the hard part. I want to keep that part simple while we introduce the other concepts that you need in order to exploit binaries:
 
@@ -26,38 +26,67 @@ The targets will gradually become more interesting. Roughly speaking, we will pr
 
 Later, we will take another step and target a particularly important code pointer: the **saved return address**. But we have a fair amount of groundwork to cover before we get there.
 
+## Course-specific objectives and solver paths
+
+Both courses use fixed, Docker-built x86-64 binaries so a shell-server upgrade
+does not silently change offsets, symbols, libc behavior, or mitigations. Docker
+is only the authoring environment; these are not Docker runtime challenges.
+
+The CS4401 path emphasizes a clear progression:
+
+1. `stack0r-64`: identify unsafe input and corrupt adjacent stack data.
+2. `stack0r-guessdown`: transfer that model to a remote, binary-withheld,
+   runtime-sized layout using `remote()` and a tolerant packed payload.
+3. `stack1r-64`: measure an exact offset, encode `MODE` with `p32()`, and use
+   an environment variable as process input.
+4. `stack2r-64`: overwrite a function pointer in a non-PIE binary using a
+   stable address.
+5. Complete the Ghidra Fundamentals mini-lab, then solve
+   `stack2r-warp-drive` from an unstripped binary without source.
+
+The CS557 path adds a second layer of reasoning:
+
+1. `stack0r-64-557`: change the target while preserving the adjacent integrity
+   field.
+2. `stack0r-guessdown-557`: infer a changing black-box layout and explain why
+   a packed spray is robust across its possible aligned offsets.
+3. `stack1r-64-557`: diagnose transformations across the shell, environment,
+   Python bytes, and C strings; construct the newline-containing value directly
+   in pwntools.
+4. `stack2r-64-557`: distinguish ELF offsets from runtime addresses, recover a
+   PIE base from a leak, and derive the winning function in the same process.
+5. Complete the Ghidra Fundamentals mini-lab, then independently recover and
+   exploit `stack2r-warp-drive-557` under ASLR.
+
+In both tracks, the expected deliverable is a repeatable Python exploit script,
+not a one-off terminal command.
+
 ## Getting Started with `stack0`
 
-Consider the basic structure of our first challenge:
+Consider the basic structure of the first CS4401 challenge:
 
 ```c
-#include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
-#include <stdio.h>
 
-int main(int argc, char **argv)
-{
-    volatile int unsecured = 0;
-    char buffer[{{buffsize}}];
-    FILE *fp;
+struct security_console {
+    char input[64];
+    volatile uint32_t security_mode;
+};
 
-    gets(buffer);
-    fp = fopen("./flag.txt", "r");
+int main(void) {
+    struct security_console console = {{0}, 0};
 
-    if (unsecured != 0) {
-        printf("The 'unsecured' variable has been changed!\n");
-        printf("Warning! Multiool is no longer in security mode\n");
-        fgets(buffer, 64, fp);
-        printf("flag: %s\n", buffer);
-    } else {
-        printf("Try again?\n");
+    read(STDIN_FILENO, console.input, sizeof(console));
+    if (console.security_mode != 0) {
+        /* print the flag */
     }
 }
 ```
 
 Our goal is to convince this program to print the contents of `flag.txt`.
 
-There is an obvious problem: `unsecured` starts at zero, the program never assigns another value to it, and the flag is only printed if `unsecured != 0`.
+There is an obvious problem: `security_mode` starts at zero, the program never assigns another value to it, and the flag is only printed if `security_mode != 0`.
 
 Under the program's intended execution, we lose.
 
@@ -70,14 +99,14 @@ For our purposes, **exploiting a binary** means taking advantage of some flaw in
 For `stack0`, our intended behavior is particularly simple:
 
 ```c
-unsecured = 0;
+security_mode = 0;
 ...
-if (unsecured != 0) {
+if (security_mode != 0) {
     ...
 }
 ```
 
-The programmer clearly expects `unsecured` to remain zero. Our job is to make that assumption false.
+The programmer clearly expects `security_mode` to remain zero. Our job is to make that assumption false.
 
 That gives us a useful way to think about an exploit. We generally need at least two things:
 
@@ -108,16 +137,24 @@ One useful habit in binary exploitation is to ask:
 In `stack0`, the most obvious answer is standard input because of this line:
 
 ```c
-gets(buffer);
+read(STDIN_FILENO, console.input, sizeof(console));
 ```
 
-`gets()` reads from **standard input**, or `stdin`. If you execute the program from a terminal and type some characters, those characters are being provided through standard input.
+`read()` reads from **standard input**, or `stdin`. If you execute the program from a terminal and type some characters, those characters are being provided through standard input.
 
 Later challenges will force us to think about other input mechanisms. For example, environment variables matter in `stack1`.
 
-For now, though, `gets()` gives us exactly the interface we need.
+For now, though, this oversized `read()` gives us exactly the interface we need.
 
-## The Bug: `gets()`
+## The Bug: A Size Mismatch
+
+The destination is the 64-byte `input` member, but the requested read length is
+the size of the entire structure. That explicitly permits bytes to cross from
+the input buffer into the adjacent security field.
+
+The infamously unsafe `gets()` function illustrates the same underlying lesson
+and still appears in older examples and other challenge code. Its interface is
+worth recognizing:
 
 If you are unfamiliar with a C library function, one of the first things you should do is read its documentation.
 
@@ -211,6 +248,10 @@ p.sendline(b'a' * 133)
 
 These sorts of one-byte details matter. Being off by one byte is very often the difference between "exploit works" and "exploit crashes."
 
+The current Stack 0 variants use `read()` and do not append this terminator.
+The detail still matters for functions that create C strings, including the
+`strcpy()` path in Stack 1.
+
 ## A Quick Review of Memory
 
 To understand what we can overwrite, we need a model of where program data lives.
@@ -248,21 +289,23 @@ We will spend plenty of time on all three.
 For `stack0`, the important one is the stack because both of these are local variables:
 
 ```c
-volatile int unsecured = 0;
-char buffer[...];
+struct security_console console = {{0}, 0};
 ```
 
 Local variables normally live in the function's **stack frame**.
 
-We will give stack frames a much more careful treatment when we get to return addresses. For now, we mostly care that `buffer` and `unsecured` are both sitting somewhere in stack memory.
+We will give stack frames a much more careful treatment when we get to return addresses. For now, we mostly care that `console.input` and `console.security_mode` are both sitting in one structure in stack memory.
 
 ## Exploiting `stack0`
 
 We now have all the pieces we need.
 
-`gets()` starts writing at the beginning of `buffer` and continues writing toward higher addresses.
+The oversized `read()` starts writing at the beginning of `console.input` and
+continues toward higher addresses.
 
-If `unsecured` happens to be at a higher address than `buffer`, then sufficiently long input can run off the end of `buffer` and eventually begin overwriting `unsecured`.
+Because C preserves structure-member order, `console.security_mode` follows the
+input array. A sufficiently long input runs off the end of the array and begins
+overwriting that field.
 
 Conceptually, perhaps memory looks like this:
 
@@ -270,10 +313,10 @@ Conceptually, perhaps memory looks like this:
 ◄──────────────── Lower addresses       Higher addresses ────────────────►
 
 +-------------------------------+----------------+
-|            buffer             |   unsecured    |
+|         console.input         | security_mode  |
 +-------------------------------+----------------+
 ^
-gets() starts writing here ──────────────────────►
+read() starts writing here ──────────────────────►
 ```
 
 If we keep writing long enough:
@@ -283,13 +326,13 @@ If we keep writing long enough:
 | A A A A A A A A A A A A A A | A A A A        |
 +-------------------------------+----------------+
                                   ^
-                                  unsecured is no longer zero
+                                  security_mode is no longer zero
 ```
 
 And suddenly:
 
 ```c
-if (unsecured != 0)
+if (console.security_mode != 0)
 ```
 
 is true.
@@ -302,18 +345,19 @@ The attack itself is simple:
 
 That basic description will continue to apply to the next few challenges. We will just keep choosing more interesting things to overwrite.
 
-## Don't Assume the C Source Tells You the Memory Layout
+## Use Explicit Layouts, Then Verify Them
 
 There is an important catch.
 
-Consider:
+For separate local variables such as:
 
 ```c
-int unsecured;
+int security_mode;
 char buffer[64];
 ```
 
-You should **not** conclude from the order of the C declarations that the compiler must put `unsecured` immediately before or after `buffer`.
+you should **not** conclude from declaration order that the compiler must put
+`security_mode` immediately before or after `buffer`.
 
 The compiler determines the actual layout.
 
@@ -321,7 +365,7 @@ It could look like this:
 
 ```text
 +----------------------+------------+
-|       buffer         | unsecured  |
+|       buffer         | security_mode |
 +----------------------+------------+
 ```
 
@@ -329,7 +373,7 @@ or:
 
 ```text
 +------------+----------------------+
-| unsecured  |       buffer         |
+| security_mode |       buffer         |
 +------------+----------------------+
 ```
 
@@ -337,11 +381,15 @@ or:
 
 ```text
 +----------------------+-----+----------------+------------+
-|       buffer         | ??? |      ???       | unsecured  |
+|       buffer         | ??? |      ???       | security_mode |
 +----------------------+-----+----------------+------------+
 ```
 
-There may be padding. There may be other saved values. Compiler choices may change between builds.
+There may be padding. There may be other saved values. Compiler choices may
+change between builds. Our current challenges deliberately place the relevant
+objects in an explicit structure, which guarantees member order, but the
+compiler may still insert padding for alignment. The binary remains the final
+authority for the exact offsets.
 
 The source code tells us what the programmer wrote.
 
@@ -412,16 +460,16 @@ A minimal starting point might look something like this:
 ```python
 from pwn import *
 
-elf = ELF('./stack0-64')
+elf = ELF('./challenge/stack0-64')
 context.binary = elf
 context.log_level = 'debug'
 
-p = gdb.debug('./stack0-64', gdbscript='''
-    break stack0.c:12
+p = gdb.debug(elf.path, cwd='./challenge', gdbscript='''
+    break source.c:30
     continue
 ''')
 
-p.sendline(b'a' * 133)
+p.send(flat({64: p32(1)}))
 
 p.recvall()
 p.wait()
@@ -472,22 +520,22 @@ That is generally much more useful than having one test input in GDB, a differen
 
 ### Looking at memory
 
-Once we have stopped the program after `gets()`, commands like these become useful:
+Once we have stopped the program after the vulnerable `read()`, commands like these become useful:
 
 ```gdb
 info locals
 ```
 
 ```gdb
-p &buffer
+p &console.input
 ```
 
 ```gdb
-x/s &buffer
+x/s &console.input
 ```
 
 ```gdb
-x/160bx &buffer
+x/96bx &console.input
 ```
 
 The last command is especially important.
@@ -522,22 +570,27 @@ We will use these constantly.
 
 Eventually we also need to become comfortable answering questions from the machine instructions themselves.
 
-For example, imagine we see something like this near the call to `gets()`:
+For example, imagine we see something like this near the call to `read()`:
 
 ```asm
-lea    rax,[rbp-0x90]
-mov    rdi,rax
-call   gets@plt
+mov    edx,0x44
+lea    rax,[rbp-0x50]
+mov    rsi,rax
+mov    edi,0x0
+call   read@plt
 ```
 
-The x86-64 System V calling convention specifies that the first function argument is placed in `rdi`.
+The x86-64 System V calling convention places the first three integer or
+pointer arguments in `rdi`, `rsi`, and `rdx`.
 
-`gets()` takes one argument: the address of the destination buffer.
+`read()` takes a file descriptor, destination address, and byte count.
 
 Therefore, immediately before the call:
 
 ```text
-RDI = address of buffer
+RDI = 0 (standard input)
+RSI = address of console.input
+RDX = 68 bytes
 ```
 
 That is incredibly useful.
@@ -545,13 +598,13 @@ That is incredibly useful.
 Rather than trying to reverse-engineer every instruction in `main`, we can often go straight to the vulnerable function call, place a breakpoint nearby, and examine the argument register:
 
 ```gdb
-p/x $rdi
+p/x $rsi
 ```
 
 or:
 
 ```gdb
-x/64bx $rdi
+x/96bx $rsi
 ```
 
 This is a recurring exploit-development strategy:
@@ -566,10 +619,10 @@ You do, however, need to understand the instructions that matter to your attack.
 
 In `stack0`, life is easy.
 
-We do not particularly care what value we place in `unsecured`. We only need:
+We do not particularly care what value we place in `security_mode`. We only need:
 
 ```c
-unsecured != 0
+security_mode != 0
 ```
 
 So one `a` byte is perfectly adequate:
@@ -580,7 +633,9 @@ So one `a` byte is perfectly adequate:
 
 The next challenge makes things more interesting.
 
-Instead of changing an integer to *anything other than zero*, suppose we need to make an integer equal some exact value:
+Instead of changing an integer to *anything other than zero*, Stack 1 requires
+an exact value. CS4401 uses `0x45444f4d`, whose packed bytes spell `MODE`;
+CS557 uses the newline-containing `0x0d0a0d0a` value:
 
 ```c
 if (modified == 0x0d0a0d0a) {
@@ -707,7 +762,7 @@ from pwn import *
 p = process(
     './stack1-64',
     env={
-        "DEBUG": b"a" * 108 + p32(0x0d0a0d0a)
+        "DEBUG": b"a" * 64 + p32(0x0d0a0d0a)
     }
 )
 
@@ -839,7 +894,7 @@ or from inside GEF:
 checksec
 ```
 
-You might see output resembling:
+For the CS557 Stack 2 binary, you should see output resembling:
 
 ```text
 Arch:     amd64-64-little
@@ -893,7 +948,11 @@ base + 0x7aa
 
 That is a consequence of the coarse-grained randomization we will discuss in our ASLR notes.
 
-For an early challenge, we may simply provide you with an **information leak** that reveals an address from the current process. Once we have one known address in a region, fixed offsets often let us calculate the address we actually want.
+CS4401 Stack 2 is non-PIE, so students first practice the function-pointer
+overwrite with a stable target address. CS557 Stack 2 provides an
+**information leak** from the current process. Once we have one known address
+in that executable, fixed symbol offsets let us calculate the PIE base and the
+runtime address we actually want.
 
 The important point for now is not to memorize an ASLR bypass.
 
@@ -1147,14 +1206,20 @@ Changing `72` to `73` because "maybe that works" generally does not.
 
 This note is most directly useful for:
 
-* `stack0r-64`: first stack-based buffer overflow and adjacent data corruption.
-* `stack1r-64`: the same basic bug, but now the overwritten value must be exact and the attacker-controlled input comes from an environment variable.
-* `stack2r-64`: the same basic bug, but the corrupted object is a function pointer, which introduces code pointers and control-flow hijacking.
+* `stack0r-64` / `stack0r-64-557`: adjacent data corruption, with the graduate
+  variant requiring preservation of a neighboring integrity field.
+* `stack1r-64` / `stack1r-64-557`: exact environment-variable overwrites, with
+  the graduate variant adding binary-data transformation diagnosis.
+* `stack2r-64` / `stack2r-64-557`: function-pointer control-flow hijacking,
+  first with a stable non-PIE address and then with leak-assisted PIE rebasing.
 
 It also sets up:
 
-* `stack0r-guessdown`: the same early questions in a less comfortable setting: what input do I control, what object can I corrupt, and how do I measure the offset?
-* `stack2r-warp-drive`: the same function-pointer model, plus the practical question of where a useful target address comes from in the process I am exploiting.
+* `stack0r-guessdown` / `stack0r-guessdown-557`: the same early questions in a
+  remote black-box setting with a runtime-sized layout and timeout.
+* `stack2r-warp-drive` / `stack2r-warp-drive-557`: source-withheld Ghidra
+  analysis followed by either a stable non-PIE target or leak-assisted PIE
+  rebasing.
 
 The next set of notes on stack frames and return addresses will pick up with `stack3r-64`.
 
