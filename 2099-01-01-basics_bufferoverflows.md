@@ -3,7 +3,7 @@ title: "Lecture Notes: Basics of Buffer Overflows"
 date: 2020-01-01 02:00:00
 categories: notes lecture
 layout: post
-challenges: stack0r-64-557 stack1r-64-557 stack2r-64-557 stack0r-guessdown-557 stack2r-warp-drive-557
+challenges: stack0g-64 stack1g-64 stack2g-64 stack0g-guessdown stack2g-warp-drive
 ---
 
 Over the first few lectures, we are going to jump straight into binary exploitation. We will start with a very simple bug---a stack-based buffer overflow caused by an oversized read---and, somewhat intentionally, keep exploiting essentially that same bug for several challenges.
@@ -46,17 +46,17 @@ The CS4401 path emphasizes a clear progression:
 
 The CS557 path adds a second layer of reasoning:
 
-1. `stack0r-64-557`: change the target while preserving the adjacent integrity
+1. `stack0g-64`: change the target while preserving the adjacent integrity
    field.
-2. `stack0r-guessdown-557`: infer a changing black-box layout and explain why
+2. `stack0g-guessdown`: infer a changing black-box layout and explain why
    a packed spray is robust across its possible aligned offsets.
-3. `stack1r-64-557`: diagnose transformations across the shell, environment,
+3. `stack1g-64`: diagnose transformations across the shell, environment,
    Python bytes, and C strings; construct the newline-containing value directly
    in pwntools.
-4. `stack2r-64-557`: distinguish ELF offsets from runtime addresses, recover a
+4. `stack2g-64`: distinguish ELF offsets from runtime addresses, recover a
    PIE base from a leak, and derive the winning function in the same process.
 5. Complete the Ghidra Fundamentals mini-lab, then independently recover and
-   exploit `stack2r-warp-drive-557` under ASLR.
+   exploit `stack2g-warp-drive` under ASLR.
 
 In both tracks, the expected deliverable is a repeatable Python exploit script,
 not a one-off terminal command.
@@ -1206,18 +1206,18 @@ Changing `72` to `73` because "maybe that works" generally does not.
 
 This note is most directly useful for:
 
-* `stack0r-64` / `stack0r-64-557`: adjacent data corruption, with the graduate
+* `stack0r-64` / `stack0g-64`: adjacent data corruption, with the graduate
   variant requiring preservation of a neighboring integrity field.
-* `stack1r-64` / `stack1r-64-557`: exact environment-variable overwrites, with
+* `stack1r-64` / `stack1g-64`: exact environment-variable overwrites, with
   the graduate variant adding binary-data transformation diagnosis.
-* `stack2r-64` / `stack2r-64-557`: function-pointer control-flow hijacking,
+* `stack2r-64` / `stack2g-64`: function-pointer control-flow hijacking,
   first with a stable non-PIE address and then with leak-assisted PIE rebasing.
 
 It also sets up:
 
-* `stack0r-guessdown` / `stack0r-guessdown-557`: the same early questions in a
+* `stack0r-guessdown` / `stack0g-guessdown`: the same early questions in a
   remote black-box setting with a runtime-sized layout and timeout.
-* `stack2r-warp-drive` / `stack2r-warp-drive-557`: source-withheld Ghidra
+* `stack2r-warp-drive` / `stack2g-warp-drive`: source-withheld Ghidra
   analysis followed by either a stable non-PIE target or leak-assisted PIE
   rebasing.
 
