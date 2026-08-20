@@ -3,7 +3,6 @@ title: "Lecture Notes: Basics of Buffer Overflows (CS557)"
 date: 2020-01-01 02:00:00
 categories: notes lecture
 layout: post
-challenges: stack0g-64 stack1g-64 stack2g-64 stack0g-guessdown stack2g-warp-drive
 ---
 
 Over the first few lectures, we are going to jump straight into binary exploitation. We will start with a very simple bug---a stack-based buffer overflow caused by an oversized read---and, somewhat intentionally, keep exploiting essentially that same bug for several challenges.
@@ -49,8 +48,8 @@ The expected deliverable is a repeatable Python exploit script, not a one-off
 terminal command.
 
 <!-- The crew manifest says nobody is in this panel. The manifest is wrong.
-You looked somewhere you were supposed to look, so take this before they notice:
-DoTheRequiredReading -->
+You looked somewhere you were supposed to look, so take this hidden flag before they notice:
+wpi{DoTheRequiredReading} -->
 
 ## Getting Started with `stack0`
 
