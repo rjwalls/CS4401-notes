@@ -3,6 +3,7 @@ title: "Lecture Notes: Basics of Buffer Overflows (CS557)"
 date: 2020-01-01 02:00:00
 categories: notes lecture
 layout: post
+challenges: stack0g-64 stack1g-64 stack2g-64 stack0g-guessdown stack2g-warp-drive
 ---
 
 Over the first few lectures, we are going to jump straight into binary exploitation. We will start with a very simple bug---a stack-based buffer overflow caused by an oversized read---and, somewhat intentionally, keep exploiting essentially that same bug for several challenges.
